@@ -1,0 +1,22 @@
+{
+  "name": "nextjs-commerce",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next",
+    "build": "next build",
+    "start": "next start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@sanity/block-content-to-react": "^2.0.7",
+    "@sanity/client": "^1.149.18",
+    "@sanity/image-url": "^0.140.19",
+    "next": "^9.4.4",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1"
+  }
+}
