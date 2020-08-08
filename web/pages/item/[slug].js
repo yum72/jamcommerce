@@ -27,12 +27,12 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }) {
-    let query = `*[slug.current == '${params.slug}'] {_createdAt, blurb, body, defaultProductVariant, tags, title, vendor->{title}, categories[]->{title}}`
+    let query = `*[slug.current == '${params.slug}'] {_createdAt, blurb, body, defaultProductVariant, tags, title, vendor->{title}, categories[]->{title}}[0]`
     const productData = await sanityClient.fetch(query)
 
     return {
         props: {
-            productData: productData[0]
+            productData: productData
         }
     }
 }

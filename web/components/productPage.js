@@ -2,6 +2,7 @@
 import imageUrlBuilder from '@sanity/image-url'
 import sanityClient from '../lib/sanity'
 import BlockContent from '@sanity/block-content-to-react'
+import Link from 'next/link'
 
 function urlFor(source) {
     return imageUrlBuilder(sanityClient).image(source)
@@ -41,7 +42,9 @@ export default function ProductPage({ product }) {
                 </div>
                 <div>
                     Category: {categories.map(category => (
-                    <>{category.title}, </>
+                    <Link key={category.title} href="/categories/[category]" as={`/categories/${category.title}`}>
+                        <a>{category.title}, </a>
+                    </Link>
                 ))}
                 </div>
                 <div>
@@ -58,9 +61,6 @@ export default function ProductPage({ product }) {
                     imageOptions={{ w: 320, h: 240, fit: 'max' }}
                     serializers={serializers}
                 />
-                {/* <div>
-                    {toPlainText(body.en)}
-                </div> */}
                 <div>
                     Vendor: {vendor.title}
                 </div>
@@ -84,7 +84,7 @@ export default function ProductPage({ product }) {
                     background: linear-gradient(top, rgba(0, 0, 0, 0) 100px, #fa8072 100px);
                 }
             `}</style>
-        </div>
+        </div >
     )
 }
 
