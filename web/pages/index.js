@@ -1,11 +1,14 @@
 // import Head from 'next/head'
 import ProductsContainer from '../components/productsContainer'
 import sanityClient from '../lib/sanity'
+import Layout from '../components/layout/layout'
 
-export default function Home({ allProductsData }) {
+export default function Home({ allProductsData, navCategories }) {
     return (
         <div>
-            <ProductsContainer products={allProductsData} />
+            <Layout navCategories={navCategories}>
+                <ProductsContainer products={allProductsData} />
+            </Layout>
         </div>
     )
 }
@@ -13,7 +16,11 @@ export default function Home({ allProductsData }) {
 export const getStaticProps = async () => {
     let query = `*[_type == 'product']{ slug, _createdAt, title, defaultProductVariant}`
     const allProductsData = await sanityClient.fetch(query)
+
+    let catQuery = `*[_type == "category" && isOnNav == true]{title}`
+    const navCategories = await sanityClient.fetch(catQuery)
+
     return {
-        props: { allProductsData } // will be passed to the page component as props
+        props: { allProductsData, navCategories } // will be passed to the page component as props
     }
 }

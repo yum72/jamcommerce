@@ -1,12 +1,12 @@
-// import Head from 'next/head'
 import sanityClient from '../../lib/sanity'
 import ProductsContainer from '../../components/productsContainer'
+import Layout from '../../components/layout/layout'
 
-export default function Post({ productsData }) {
+export default function Post({ productsData, navCategories }) {
     return (
-        <div>
+        <Layout navCategories={navCategories}>
             <ProductsContainer products={productsData} />
-        </div>
+        </Layout>
     )
 }
 
@@ -32,12 +32,15 @@ export async function getStaticProps({ params }) {
         "products": *[_type == "product" && references(^._id)]
         {slug, _createdAt, title, defaultProductVariant}
       }[0]`
-
     const result = await sanityClient.fetch(query)
+
+    let catQuery = `*[_type == "category" && isOnNav == true]{title}`
+    const navCategories = await sanityClient.fetch(catQuery)
 
     return {
         props: {
-            productsData: result.products
+            productsData: result.products,
+            navCategories
         }
     }
 }
