@@ -9,6 +9,11 @@ export default {
       type: 'string'
     },
     {
+      title: 'Show on Nav bar?',
+      name: 'isOnNav',
+      type: 'boolean'
+    },
+    {
       name: 'slug',
       title: 'Slug',
       type: 'slug',
@@ -29,7 +34,7 @@ export default {
       of: [
         {
           type: 'reference',
-          to: [{type: 'category'}]
+          to: [{ type: 'category' }]
         }
       ]
     }
