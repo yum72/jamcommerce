@@ -16,11 +16,13 @@
     "@sanity/client": "^1.149.18",
     "@sanity/image-url": "^0.140.19",
     "next": "^9.4.4",
+    "next-redux-wrapper": "^6.0.2",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-redux": "^7.2.1",
     "redux": "^4.0.5",
     "redux-devtools-extension": "^2.13.8",
-    "redux-persist": "^6.0.0"
+    "redux-persist": "^6.0.0",
+    "redux-thunk": "^2.3.0"
   }
 }

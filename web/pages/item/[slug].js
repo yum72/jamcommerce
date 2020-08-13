@@ -26,7 +26,7 @@ export async function getStaticPaths () {
 }
 
 export async function getStaticProps ({ params }) {
-  let query = `*[slug.current == '${params.slug}'] {_id, _createdAt, blurb, body, defaultProductVariant, tags, title, vendor->{title}, categories[]->{title}}[0]`
+  let query = `*[slug.current == '${params.slug}'] {_id, slug, _createdAt, blurb, body, defaultProductVariant, tags, title, vendor->{title}, categories[]->{title}}[0]`
   const productData = await sanityClient.fetch(query)
 
   let catQuery = `*[_type == "category" && isOnNav == true]{title}`

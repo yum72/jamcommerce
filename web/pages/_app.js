@@ -1,17 +1,14 @@
-import { useStore } from '../redux/cart'
-import { Provider } from 'react-redux'
-import { persistStore } from 'redux-persist'
+import { wrapper } from '../redux/store'
+import { useStore } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
 
-export default function App ({ Component, pageProps }) {
-  const store = useStore(pageProps.initialReduxState)
-  const persistor = persistStore(store)
-
+function MyApp ({ Component, pageProps }) {
+  const store = useStore(state => state)
   return (
-    <Provider store={store}>
-      <PersistGate loading={<Component {...pageProps} />} persistor={persistor}>
-        <Component {...pageProps} />
-      </PersistGate>
-    </Provider>
+    <PersistGate persistor={store.__persistor} loading={<div>Loading</div>}>
+      <Component {...pageProps} />
+    </PersistGate>
   )
 }
+
+export default wrapper.withRedux(MyApp)

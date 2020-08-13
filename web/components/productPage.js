@@ -1,4 +1,4 @@
-import { useSelector, useDispatch } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import imageUrlBuilder from '@sanity/image-url'
 import sanityClient from '../lib/sanity'
 import BlockContent from '@sanity/block-content-to-react'
@@ -22,6 +22,7 @@ const serializers = {
 export default function ProductPage ({ product }) {
   const dispatch = useDispatch()
   const {
+    _id,
     _createdAt,
     blurb,
     body = [],
@@ -29,8 +30,18 @@ export default function ProductPage ({ product }) {
     tags,
     title,
     vendor,
-    categories
+    categories,
+    slug
   } = product
+
+  const cartItem = {
+    _id,
+    slug,
+    _createdAt,
+    title,
+    defaultProductVariant,
+    count: 1
+  }
 
   let { price, images } = defaultProductVariant
   return (
@@ -68,7 +79,7 @@ export default function ProductPage ({ product }) {
         />
         <div>Vendor: {vendor.title}</div>
         <div>Tag: {tags}</div>
-        <button onClick={() => dispatch(actions.addToCart(product))}>
+        <button onClick={() => dispatch(actions.addToCart(cartItem))}>
           Add to cart
         </button>
       </div>

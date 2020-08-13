@@ -1,43 +1,89 @@
-import { useMemo } from 'react'
-import { createStore, applyMiddleware } from 'redux'
-import { composeWithDevTools } from 'redux-devtools-extension'
-import { persistReducer } from 'redux-persist'
-import storage from 'redux-persist/lib/storage'
+// import { useMemo } from 'react'
+// import { createStore, applyMiddleware } from 'redux'
+// import { composeWithDevTools } from 'redux-devtools-extension'
+// import { persistReducer } from 'redux-persist'
+// import storage from 'redux-persist/lib/storage'
 
-let store
+// let store
 
-const exampleInitialState = {
+export const cartInitialState = {
   count: 0,
-  cart: [],
+  cart: {},
   sum: 0,
   error: null
 }
 
 export const actionTypes = {
   ADD_TO_CART: 'ADD_TO_CART',
-  REMOVE_FROM_CART: 'REMOVE_FROM_CART',
+  REMOVE_ONE_FROM_CART: 'REMOVE_ONE_FROM_CART',
+  REMOVE_ALL_FROM_CART: 'REMOVE_ALL_FROM_CART',
   CLEAR_CART: 'CLEAR_CART',
   LOADING_DATA_FAILURE: 'LOADING_DATA_FAILURE'
 }
 
 // REDUCERS
-export const reducer = (state = exampleInitialState, action) => {
+export const cart = (state = cartInitialState, action) => {
   switch (action.type) {
-    case actionTypes.ADD_TO_CART:
+    case actionTypes.ADD_TO_CART: {
       let price = action.data.defaultProductVariant.price
+      let cartItem = action.data
+      let updatedCart = { ...state.cart }
+
+      if (state.cart[cartItem._id]) {
+        updatedCart[cartItem._id].count++
+      } else {
+        updatedCart = { ...updatedCart, [cartItem._id]: cartItem }
+      }
       return {
         ...state,
-        cart: [...state.cart, action.data],
-        count: state.cart.length + 1,
+        cart: updatedCart,
+        count: state.count + 1,
         sum: state.sum + price
       }
-    case actionTypes.CLEAR_CART:
+    }
+
+    case actionTypes.REMOVE_ONE_FROM_CART: {
+      let price = action.data.defaultProductVariant.price
+      let cartItem = action.data
+      let updatedCart = { ...state.cart }
+
+      if (state.cart[cartItem._id] && state.cart[cartItem._id].count > 1) {
+        updatedCart[cartItem._id].count--
+      } else if (state.cart[cartItem._id].count == 1) {
+        delete updatedCart[cartItem._id]
+      }
       return {
         ...state,
-        cart: [],
+        cart: updatedCart,
+        count: state.count - 1,
+        sum: state.sum - price
+      }
+    }
+
+    case actionTypes.REMOVE_ALL_FROM_CART: {
+      let price = action.data.defaultProductVariant.price
+      let cartItem = action.data
+      let updatedCart = { ...state.cart }
+      let itemCount = updatedCart[cartItem._id].count
+      let totalItemPrice = itemCount * price
+      delete updatedCart[cartItem._id]
+
+      return {
+        ...state,
+        cart: updatedCart,
+        count: state.count - itemCount,
+        sum: state.sum - totalItemPrice
+      }
+    }
+
+    case actionTypes.CLEAR_CART: {
+      return {
+        ...state,
+        cart: {},
         count: 0,
         sum: 0
       }
+    }
     case actionTypes.LOADING_DATA_FAILURE:
       return { ...state, error: true }
     default:
@@ -51,6 +97,14 @@ export const actions = {
     return { type: actionTypes.ADD_TO_CART, data }
   },
 
+  removeFromCart: data => {
+    return { type: actionTypes.REMOVE_ONE_FROM_CART, data }
+  },
+
+  removeAllFromCart: data => {
+    return { type: actionTypes.REMOVE_ALL_FROM_CART, data }
+  },
+
   clearCart: () => {
     return { type: actionTypes.CLEAR_CART }
   },
@@ -58,47 +112,4 @@ export const actions = {
   loadingExampleDataFailure: () => {
     return { type: actionTypes.LOADING_DATA_FAILURE }
   }
-}
-
-const persistConfig = {
-  key: 'primary',
-  storage,
-  whitelist: ['cart', 'count', 'sum'] // place to select which state you want to persist
-}
-
-const persistedReducer = persistReducer(persistConfig, reducer)
-
-function makeStore (initialState = exampleInitialState) {
-  return createStore(
-    persistedReducer,
-    initialState,
-    composeWithDevTools(applyMiddleware())
-  )
-}
-
-export const initializeStore = preloadedState => {
-  let _store = store ?? makeStore(preloadedState)
-
-  // After navigating to a page with an initial Redux state, merge that state
-  // with the current state in the store, and create a new store
-  if (preloadedState && store) {
-    _store = makeStore({
-      ...store.getState(),
-      ...preloadedState
-    })
-    // Reset the current store
-    store = undefined
-  }
-
-  // For SSG and SSR always create a new store
-  if (typeof window === 'undefined') return _store
-  // Create the store once in the client
-  if (!store) store = _store
-
-  return _store
-}
-
-export function useStore (initialState) {
-  const store = useMemo(() => initializeStore(initialState), [initialState])
-  return store
 }
