@@ -1,5 +1,5 @@
 import SingleProduct from './singleProduct'
-import CartItem from './CartItem'
+import CartItem from './cartItem'
 
 export default function ProductsContainer ({ products }) {
   return (
