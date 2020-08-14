@@ -11,7 +11,6 @@ export default function Layout (props) {
       </Head>
       <NavigationHeader navCategories={props.navCategories} />
       <div id='main'>{props.children}</div>
-      <footer>Copyright@2020</footer>
     </div>
   )
 }

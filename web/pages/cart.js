@@ -13,7 +13,7 @@ export default function Cart ({ navCategories }) {
     <Layout navCategories={navCategories}>
       <ProductsContainer products={cartItemsList} />
       <button onClick={() => dispatch(actions.clearCart())}>Clear Cart</button>
-      <div>Total: {cartSum}</div>
+      <div>Total: {cartSum.toFixed(2)}</div>
     </Layout>
   )
 }

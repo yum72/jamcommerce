@@ -37,7 +37,7 @@ export default function CartItem ({ product }) {
                 </div> */}
         <div>Quantity: {count}</div>
         <div>
-          {price}$ x {count} : {price * count}$
+          {price}$ x {count} : {(price * count).toFixed(2)}$
         </div>
         <button onClick={() => dispatch(actions.addToCart(product))}>
           Add Item(+1)
