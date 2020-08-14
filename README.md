@@ -9,7 +9,7 @@ No styling is done in the project as this can be used as a starter and you can t
 
 # Usage
 
-After setting up sanity.io for data(in studio folder), go to web directory and use 'yarn dev' or 'npm dev' to start dev server
+After setting up sanity.io for data(in studio folder), go to web directory and use 'yarn dev' or 'npm dev' to start dev server.
 
 ## To Do:
 
