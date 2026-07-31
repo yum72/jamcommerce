@@ -1,12 +1,21 @@
+import { createClient } from '@sanity/client'
 
-import sanityClient from "@sanity/client";
+const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
+const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production'
 
-export default sanityClient({
-    // Find your project ID and dataset in `sanity.json` in your studio project
-    projectId: "ucsjd93o",
-    dataset: "production",
-    useCdn: true
-    // useCdn == true gives fast, cheap responses using a globally distributed cache.
-    // Set this to false if your application require the freshest possible
-    // data always (potentially slightly slower and a bit more expensive).
-});
+if (!projectId) {
+  throw new Error(
+    'NEXT_PUBLIC_SANITY_PROJECT_ID is not set. Copy .env.example to .env.local and fill it in.'
+  )
+}
+
+export default createClient({
+  projectId,
+  dataset,
+  // Pin the API version. Without one the client warns and follows whatever is
+  // current, so a Sanity release can change query behaviour under a deployed site.
+  apiVersion: '2024-01-01',
+  // Served from the CDN, which is cheaper and faster. Pages are statically
+  // generated anyway, so the small staleness window costs nothing here.
+  useCdn: true
+})

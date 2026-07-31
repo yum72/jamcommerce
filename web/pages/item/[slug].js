@@ -3,9 +3,9 @@ import sanityClient from '../../lib/sanity'
 import ProductPage from '../../components/productPage'
 import Layout from '../../components/layout/layout'
 
-export default function Post ({ productData, navCategories }) {
+export default function Post ({ productData, navCategories, subCategories }) {
   return (
-    <Layout navCategories={navCategories}>
+    <Layout navCategories={navCategories} subCategories={subCategories}>
       <ProductPage product={productData} />
     </Layout>
   )
@@ -26,16 +26,20 @@ export async function getStaticPaths () {
 }
 
 export async function getStaticProps ({ params }) {
-  let query = `*[slug.current == '${params.slug}'] {_id, _createdAt, blurb, body, defaultProductVariant, tags, title, vendor->{title}, categories[]->{title}}[0]`
+  let query = `*[_type == 'product' && slug.current == '${params.slug}'] {_id, slug, _createdAt, blurb, body, defaultProductVariant, tags, title, vendor->{title}, categories[]->{title, slug}}[0]`
   const productData = await sanityClient.fetch(query)
 
-  let catQuery = `*[_type == "category" && isOnNav == true]{title}`
+  let catQuery = `*[_type == "category" && isOnNav == true]{slug, title}`
   const navCategories = await sanityClient.fetch(catQuery)
+
+  let subCategoriesQuery = `*[_type == "category" && defined(parents)]{title, slug}`
+  const subCategories = await sanityClient.fetch(subCategoriesQuery)
 
   return {
     props: {
-      productData: productData,
-      navCategories
+      productData,
+      navCategories,
+      subCategories
     }
   }
 }

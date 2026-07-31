@@ -1,17 +1,51 @@
-import { useStore } from '../redux/cart'
+import Head from 'next/head'
+import Script from 'next/script'
 import { Provider } from 'react-redux'
-import { persistStore } from 'redux-persist'
-import { PersistGate } from 'redux-persist/integration/react'
+import { ToastContainer } from 'react-toastify'
 
-export default function App ({ Component, pageProps }) {
-  const store = useStore(pageProps.initialReduxState)
-  const persistor = persistStore(store)
+import { store } from '../redux/store'
+import '../styles/index.css'
+import 'react-image-gallery/styles/css/image-gallery.css'
+import 'react-toastify/dist/ReactToastify.css'
 
+const SNIPCART_API_KEY = process.env.NEXT_PUBLIC_SNIPCART_API_KEY
+
+export default function MyApp ({ Component, pageProps }) {
   return (
     <Provider store={store}>
-      <PersistGate loading={<Component {...pageProps} />} persistor={persistor}>
-        <Component {...pageProps} />
-      </PersistGate>
+      <Head>
+        <link rel='preconnect' href='https://app.snipcart.com' />
+        <link rel='preconnect' href='https://cdn.snipcart.com' />
+        <link
+          rel='stylesheet'
+          href='https://cdn.snipcart.com/themes/v3.7.1/default/snipcart.css'
+        />
+      </Head>
+
+      {/* next/script rather than a raw <script> inside <Head>, which Next has
+          warned about since 11 and which blocked first paint. */}
+      <Script
+        src='https://cdn.snipcart.com/themes/v3.7.1/default/snipcart.js'
+        strategy='afterInteractive'
+      />
+
+      {/* Deliberately no PersistGate wrapping the page. Gating render on
+          rehydration makes the prerendered HTML of every product and category
+          page empty, which throws away the point of static generation on a
+          storefront that wants to be indexed. The cart rehydrates a tick after
+          mount and the badge updates then; nothing else on a page depends on
+          it. The previous version worked around the blank page by passing the
+          page itself as PersistGate's loading prop, which rendered the whole
+          tree twice. */}
+      <Component {...pageProps} />
+
+      {/* Mounted once here rather than inside a page. Per-page containers get
+          unmounted mid client-side navigation while react-toastify still holds
+          references to their nodes, which surfaces as React throwing
+          "insertBefore ... is not a child of this node" and blanking the page. */}
+      <ToastContainer position='top-center' autoClose={3000} closeOnClick />
+
+      <div hidden id='snipcart' data-api-key={SNIPCART_API_KEY} />
     </Provider>
   )
 }
