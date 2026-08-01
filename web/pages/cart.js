@@ -11,11 +11,18 @@ export default function Cart ({ navCategories, subCategories }) {
   const cartItemsList = Object.values(cartItemsObj)
 
   return (
-    <Layout navCategories={navCategories} subCategories={subCategories}>
+    <Layout
+      title='Your cart'
+      description='Review the items in your cart before checking out.'
+      path='/cart'
+      noindex
+      navCategories={navCategories}
+      subCategories={subCategories}
+    >
       <div className=' max-w-6xl mx-auto'>
-        <h2 className='py-2 text-4xl tracking-tight leading-10 font-bold text-gray-800 flex justify-center'>
+        <h1 className='py-2 text-4xl tracking-tight leading-10 font-bold text-gray-800 flex justify-center'>
           Your Cart
-        </h2>
+        </h1>
         <div className='flex justify-center flex-col'>
           {cartItemsList.map(product => (
             <div key={product.slug.current}>
@@ -33,7 +40,7 @@ export default function Cart ({ navCategories, subCategories }) {
             ${cartSum.toFixed(2)}
           </span>
         </div>
-        <button className='w-full flex items-center justify-center px-8 mt-10 py-3 border border-transparent text-base leading-6 font-medium rounded text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:border-gray-900 focus:shadow-outline-gray transition duration-150 ease-in-out md:py-4 md:text-lg md:px-10 shadow-lg'>
+        <button className='w-full flex items-center justify-center px-8 mt-10 py-3 border border-transparent text-base leading-6 font-medium rounded text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 transition duration-150 ease-in-out md:py-4 md:text-lg md:px-10 shadow-lg'>
           Checkout
         </button>
       </div>

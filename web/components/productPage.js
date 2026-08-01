@@ -62,7 +62,11 @@ export default function ProductPage ({ product }) {
       .url()
     return {
       original,
-      thumbnail
+      thumbnail,
+      // react-image-gallery renders its own img tags, so alt text has to be
+      // handed to it here rather than set in the markup.
+      originalAlt: title,
+      thumbnailAlt: title
     }
   })
 
@@ -99,7 +103,7 @@ export default function ProductPage ({ product }) {
           )}
         </div>
         <div className='py-2 flex-1 '>
-          <div className='text-4xl text-gray-800'>{title}</div>
+          <h1 className='text-4xl text-gray-800'>{title}</h1>
           <div className='text-3xl font-semibold text-gray-700'>${price}</div>
           <div className='pt-4 text-2xl text-gray-700'>{blurb.en}</div>
           <div className='pt-2 pt-4text-base text-gray-600'>
@@ -161,7 +165,7 @@ export default function ProductPage ({ product }) {
               data-item-description={blurb.en}
               data-item-image={sliderImages[0].thumbnail}
               data-item-name={title}
-              className='w-full flex items-center justify-center sm:px-8 py-4 border border-transparent text-sm sm:text-base leading-6 font-medium rounded text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:border-gray-900 focus:shadow-outline-gray transition duration-150 ease-in-out md:text-lg md:px-10 shadow-lg'
+              className='w-full flex items-center justify-center sm:px-8 py-4 border border-transparent text-sm sm:text-base leading-6 font-medium rounded text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 transition duration-150 ease-in-out md:text-lg md:px-10 shadow-lg'
               onClick={handleAddToCart}
             >
               Add to cart
