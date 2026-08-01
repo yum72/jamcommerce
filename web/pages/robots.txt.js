@@ -22,6 +22,7 @@ export async function getServerSideProps ({ res, req }) {
         'Allow: /',
         // Nothing to rank, and per-visitor.
         'Disallow: /cart',
+        'Disallow: /wishlist',
         '',
         `Sitemap: ${origin}/sitemap.xml`
       ].join('\n')

@@ -3,8 +3,11 @@ import Link from 'next/link'
 import imageUrlBuilder from '@sanity/image-url'
 import { toast } from 'react-toastify'
 import sanityClient from '../lib/sanity'
+import { getLayoutProps } from '../lib/layoutData'
 import CartItem from '../components/cartItem'
 import Layout from '../components/layout/layout'
+import Price from '../components/ui/price'
+import { ArrowRightIcon, TruckIcon } from '../components/ui/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import {
   selectCart,
@@ -14,12 +17,13 @@ import {
 } from '../redux/cartSlice'
 
 const SNIPCART_ENABLED = Boolean(process.env.NEXT_PUBLIC_SNIPCART_API_KEY)
+const FREE_DELIVERY_OVER = 500
 
 function urlFor (source) {
   return imageUrlBuilder(sanityClient).image(source)
 }
 
-export default function Cart ({ navCategories, subCategories }) {
+export default function Cart ({ ...layout }) {
   const dispatch = useDispatch()
   const cartItemsObj = useSelector(selectCart)
   const cartSum = useSelector(selectCartSum)
@@ -29,6 +33,7 @@ export default function Cart ({ navCategories, subCategories }) {
   const [checkingOut, setCheckingOut] = useState(false)
 
   const isEmpty = cartItemsList.length === 0
+  const qualifiesForFreeDelivery = cartSum >= FREE_DELIVERY_OVER
 
   /**
    * Hands the cart to Snipcart, then opens it.
@@ -91,114 +96,131 @@ export default function Cart ({ navCategories, subCategories }) {
       description='Review the items in your cart before checking out.'
       path='/cart'
       noindex
-      navCategories={navCategories}
-      subCategories={subCategories}
+      {...layout}
     >
-      <div className='mx-auto max-w-5xl'>
-        <h1 className='pt-4 pb-8 text-4xl font-extrabold tracking-tight text-gray-900'>
-          Your cart
-          {!isEmpty && (
-            <span className='ml-3 text-lg font-medium text-gray-500'>
-              {cartCount} item{cartCount === 1 ? '' : 's'}
-            </span>
-          )}
-        </h1>
-
-        {isEmpty ? (
-          <div className='rounded-2xl border border-dashed border-gray-300 bg-white/60 px-8 py-16 text-center'>
-            <p className='text-lg text-gray-600'>Your cart is empty.</p>
-            <Link
-              href='/'
-              className='mt-6 inline-flex items-center rounded-lg bg-gray-900 px-6 py-3 font-medium text-white transition hover:bg-gray-800'
-            >
-              Continue shopping
-            </Link>
-          </div>
-        ) : (
-          <>
-            <div className='divide-y divide-gray-200 rounded-2xl bg-white shadow-sm'>
-              {cartItemsList.map(product => (
-                <CartItem key={product.slug.current} product={product} />
-              ))}
-            </div>
-
-            <div className='mt-8 rounded-2xl bg-white p-6 shadow-sm'>
-              <div className='flex items-center justify-between border-b border-gray-100 pb-4'>
-                <span className='text-gray-600'>Subtotal</span>
-                <span className='text-2xl font-bold text-gray-900'>
-                  ${cartSum.toFixed(2)}
-                </span>
-              </div>
-
-              {/* The checkout button previously had no click handler and no
-                  Snipcart class, so it did nothing at any point in the site's
-                  history. It is now wired to Snipcart when a key is configured,
-                  and honestly disabled when there is nothing to check out with
-                  rather than pretending to work. */}
-              {SNIPCART_ENABLED ? (
-                <button
-                  type='button'
-                  onClick={handleCheckout}
-                  disabled={checkingOut}
-                  className='mt-6 flex w-full items-center justify-center rounded-lg bg-gray-900 px-8 py-4 text-lg font-medium text-white shadow-lg transition hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:bg-gray-600'
-                >
-                  {checkingOut ? 'Opening checkout…' : 'Checkout'}
-                </button>
-              ) : (
-                <>
-                  <button
-                    type='button'
-                    disabled
-                    title='No payment provider is connected'
-                    className='mt-6 flex w-full cursor-not-allowed items-center justify-center rounded-lg bg-gray-300 px-8 py-4 text-lg font-medium text-gray-600'
-                  >
-                    Checkout
-                  </button>
-                  <p className='mt-3 text-center text-sm text-gray-500'>
-                    Checkout is disabled because no payment provider is
-                    connected. Set{' '}
-                    <code className='rounded bg-gray-100 px-1'>
-                      NEXT_PUBLIC_SNIPCART_API_KEY
-                    </code>{' '}
-                    to enable it.
-                  </p>
-                </>
-              )}
-
-              <div className='mt-4 flex items-center justify-between'>
-                <Link
-                  href='/'
-                  className='text-sm font-medium text-gray-600 underline-offset-2 hover:text-gray-900 hover:underline'
-                >
-                  Continue shopping
-                </Link>
-                <button
-                  type='button'
-                  onClick={() => dispatch(clearCart())}
-                  className='text-sm font-medium text-red-600 underline-offset-2 hover:text-red-700 hover:underline'
-                >
-                  Clear cart
-                </button>
-              </div>
-            </div>
-          </>
+      <h1 className='font-display text-3xl font-extrabold tracking-tight sm:text-4xl'>
+        Your cart
+        {!isEmpty && (
+          <span className='ml-3 align-middle text-base font-medium text-ink-muted'>
+            {cartCount} item{cartCount === 1 ? '' : 's'}
+          </span>
         )}
-      </div>
+      </h1>
+
+      {isEmpty ? (
+        <div className='mt-8 rounded-3xl bg-tile px-8 py-20 text-center'>
+          <p className='font-display text-xl font-bold'>Your cart is empty</p>
+          <p className='mt-2 text-ink-muted'>
+            Nothing here yet. Have a look at what is in store.
+          </p>
+          <Link href='/' className='btn btn-primary mt-8 px-8 py-4'>
+            Start shopping
+            <ArrowRightIcon className='h-5 w-5' />
+          </Link>
+        </div>
+      ) : (
+        <div className='mt-8 grid items-start gap-10 lg:grid-cols-[1.6fr_1fr]'>
+          <div className='divide-y divide-line border-y border-line'>
+            {cartItemsList.map(product => (
+              <CartItem key={product.slug.current} product={product} />
+            ))}
+          </div>
+
+          {/* Sticky, so the total and the checkout button stay in view while a
+              long cart is scrolled. */}
+          <aside className='rounded-3xl bg-cream-50 p-6 lg:sticky lg:top-28'>
+            <h2 className='font-display text-lg font-extrabold'>Order summary</h2>
+
+            <dl className='mt-5 space-y-3 text-sm'>
+              <div className='flex items-center justify-between'>
+                <dt className='text-ink-muted'>Subtotal</dt>
+                <dd>
+                  <Price value={cartSum} className='text-base' />
+                </dd>
+              </div>
+              <div className='flex items-center justify-between'>
+                <dt className='text-ink-muted'>Delivery</dt>
+                <dd className='font-semibold'>
+                  {qualifiesForFreeDelivery ? 'Free' : 'Calculated at checkout'}
+                </dd>
+              </div>
+            </dl>
+
+            <div className='mt-5 flex items-center justify-between border-t border-line pt-5'>
+              <span className='font-display font-extrabold'>Total</span>
+              <Price value={cartSum} className='text-2xl' />
+            </div>
+
+            {!qualifiesForFreeDelivery && (
+              <p className='mt-4 flex items-start gap-2 text-sm text-ink-muted'>
+                <TruckIcon className='mt-0.5 h-4.5 w-4.5 shrink-0 text-forest-900' />
+                <span>
+                  <Price
+                    value={FREE_DELIVERY_OVER - cartSum}
+                    className='text-sm'
+                  />{' '}
+                  more for free delivery.
+                </span>
+              </p>
+            )}
+
+            {/* The checkout button previously had no click handler and no
+                Snipcart class, so it did nothing at any point in the site's
+                history. It is now wired to Snipcart when a key is configured,
+                and honestly disabled when there is nothing to check out with
+                rather than pretending to work. */}
+            {SNIPCART_ENABLED ? (
+              <button
+                type='button'
+                onClick={handleCheckout}
+                disabled={checkingOut}
+                className='btn btn-primary mt-6 w-full px-8 py-4 disabled:cursor-wait'
+              >
+                {checkingOut ? 'Opening checkout…' : 'Checkout'}
+              </button>
+            ) : (
+              <>
+                <button
+                  type='button'
+                  disabled
+                  title='No payment provider is connected'
+                  className='btn mt-6 w-full cursor-not-allowed bg-line px-8 py-4 text-ink-muted'
+                >
+                  Checkout
+                </button>
+                <p className='mt-3 text-sm text-ink-muted'>
+                  Checkout is disabled because no payment provider is connected.
+                  Set{' '}
+                  <code className='rounded bg-white px-1 py-0.5 text-xs'>
+                    NEXT_PUBLIC_SNIPCART_API_KEY
+                  </code>{' '}
+                  to enable it.
+                </p>
+              </>
+            )}
+
+            <div className='mt-5 flex items-center justify-between text-sm font-semibold'>
+              <Link
+                href='/'
+                className='text-ink-muted underline-offset-4 transition hover:text-forest-900 hover:underline'
+              >
+                Continue shopping
+              </Link>
+              <button
+                type='button'
+                onClick={() => dispatch(clearCart())}
+                className='text-ink-muted underline-offset-4 transition hover:text-forest-900 hover:underline'
+              >
+                Clear cart
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
     </Layout>
   )
 }
 
 export async function getStaticProps () {
-  let catQuery = `*[_type == "category" && isOnNav == true]{slug, title}`
-  const navCategories = await sanityClient.fetch(catQuery)
-
-  let subCategoriesQuery = `*[_type == "category" && defined(parents)]{title, slug}`
-  const subCategories = await sanityClient.fetch(subCategoriesQuery)
-
-  return {
-    props: {
-      navCategories,
-      subCategories
-    }
-  }
+  return { props: await getLayoutProps() }
 }

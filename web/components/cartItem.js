@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import imageUrlBuilder from '@sanity/image-url'
-import sanityClient from '../lib/sanity'
 import { useDispatch } from 'react-redux'
+import sanityClient from '../lib/sanity'
+import Price from './ui/price'
+import { MinusIcon, PlusIcon, CloseIcon } from './ui/icons'
 import {
   addToCart,
   removeOneFromCart,
@@ -14,21 +16,23 @@ function urlFor (source) {
 
 export default function CartItem ({ product }) {
   const dispatch = useDispatch()
-  const { slug, title, defaultProductVariant, count } = product
+  const { slug, title, category, defaultProductVariant, count } = product
   const oneProduct = { ...product, count: 1 }
-  const { price } = defaultProductVariant
+  const { price, images } = defaultProductVariant
 
   return (
-    <div className='flex flex-wrap items-center gap-4 p-4 sm:flex-nowrap sm:gap-6 sm:p-6'>
-      {defaultProductVariant.images && (
+    <div className='flex flex-wrap items-center gap-4 py-5 sm:flex-nowrap sm:gap-6'>
+      {images?.[0] && (
         <Link
           href={`/item/${slug.current}`}
-          className='shrink-0 overflow-hidden rounded-xl bg-gray-100'
+          tabIndex={-1}
+          aria-hidden='true'
+          className='shrink-0 overflow-hidden rounded-2xl bg-tile'
         >
           <img
-            className='h-24 w-24 object-cover transition duration-300 hover:scale-105 sm:h-28 sm:w-28'
-            src={urlFor(defaultProductVariant.images[0]).width(300).url()}
-            alt={title}
+            className='h-24 w-24 object-cover sm:h-28 sm:w-28'
+            src={urlFor(images[0]).width(300).url()}
+            alt=''
             loading='lazy'
             width='300'
             height='300'
@@ -39,52 +43,54 @@ export default function CartItem ({ product }) {
       <div className='min-w-0 flex-1'>
         <Link
           href={`/item/${slug.current}`}
-          className='block truncate text-lg font-semibold text-gray-900 transition hover:text-gray-600'
+          className='block truncate font-display font-bold transition hover:text-forest-900'
         >
           {title}
         </Link>
-        <p className='mt-0.5 text-sm text-gray-500'>${price} each</p>
+        <p className='mt-0.5 flex items-center gap-1 text-sm text-ink-muted'>
+          {category && <span>{category} ·</span>}
+          <Price value={price} className='text-sm' /> each
+        </p>
 
         <div className='mt-3 flex items-center gap-3'>
-          <div className='inline-flex items-center rounded-lg border border-gray-300'>
+          <div className='inline-flex items-center rounded-full bg-tile'>
             <button
               type='button'
               aria-label={`Remove one ${title}`}
-              className='px-3 py-1.5 text-lg font-bold text-gray-700 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500'
+              className='grid h-9 w-9 place-items-center rounded-full transition hover:bg-line'
               onClick={() => dispatch(removeOneFromCart(oneProduct))}
             >
-              &minus;
+              <MinusIcon className='h-4 w-4' />
             </button>
             <span
-              aria-label='Quantity'
-              className='w-10 text-center text-sm font-semibold tabular-nums'
+              aria-label={`Quantity: ${count}`}
+              className='w-8 text-center font-display text-sm font-bold tabular-nums'
             >
               {count}
             </span>
             <button
               type='button'
               aria-label={`Add one ${title}`}
-              className='px-3 py-1.5 text-lg font-bold text-gray-700 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500'
+              className='grid h-9 w-9 place-items-center rounded-full transition hover:bg-line'
               onClick={() => dispatch(addToCart(oneProduct))}
             >
-              +
+              <PlusIcon className='h-4 w-4' />
             </button>
           </div>
 
           <button
             type='button'
-            className='text-sm font-medium text-red-600 underline-offset-2 transition hover:text-red-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500'
+            className='inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted transition hover:text-forest-900'
             onClick={() => dispatch(removeAllFromCart(product))}
           >
+            <CloseIcon className='h-4 w-4' />
             Remove
           </button>
         </div>
       </div>
 
       <div className='ml-auto text-right'>
-        <div className='text-xl font-bold tabular-nums text-gray-900'>
-          ${(price * count).toFixed(2)}
-        </div>
+        <Price value={price * count} className='text-xl' />
       </div>
     </div>
   )
