@@ -6,13 +6,22 @@ export default function Post ({
   productsData,
   navCategories,
   category,
+  categorySlug,
   subCategories
 }) {
+  const count = productsData?.length ?? 0
+
   return (
-    <Layout navCategories={navCategories} subCategories={subCategories}>
-      <div className='py-2 text-4xl tracking-tight leading-10 font-bold text-gray-800 flex justify-center'>
+    <Layout
+      title={category}
+      description={`Browse ${count} ${category} product${count === 1 ? '' : 's'}. Prices, photos and details for everything in the ${category} range.`}
+      path={categorySlug ? `/categories/${categorySlug}` : undefined}
+      navCategories={navCategories}
+      subCategories={subCategories}
+    >
+      <h1 className='py-2 text-4xl tracking-tight leading-10 font-bold text-gray-800 flex justify-center'>
         {category}
-      </div>
+      </h1>
       <ProductsContainer products={productsData} />
     </Layout>
   )
@@ -51,6 +60,7 @@ export async function getStaticProps ({ params }) {
     props: {
       productsData: result.products,
       category: result.category.title,
+      categorySlug: params.category,
       navCategories,
       subCategories
     }

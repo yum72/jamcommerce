@@ -14,7 +14,15 @@ export default function Home ({
 }) {
   return (
     <div>
-      <Layout navCategories={navCategories} subCategories={subCategories}>
+      <Layout
+        title={null}
+        description={heroSection?.title
+          ? `${heroSection.title}. Shop cameras, phones and more, with photos, prices and details for every product.`
+          : 'Shop cameras, phones and more, with photos, prices and details for every product.'}
+        path='/'
+        navCategories={navCategories}
+        subCategories={subCategories}
+      >
         <HeroSection heroSection={heroSection} />
         <CategoriesSection categoriesSectionData={categoriesSectionData} />
         <ProductsContainer
