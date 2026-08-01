@@ -13,6 +13,7 @@ import storage from 'redux-persist/lib/storage'
 import createWebStorage from 'redux-persist/lib/storage/createWebStorage'
 
 import cartReducer from './cartSlice'
+import wishlistReducer from './wishlistSlice'
 
 /**
  * redux-persist reaches for localStorage at import time, which does not exist
@@ -31,10 +32,13 @@ const persistConfig = {
   key: 'primary',
   version: 1,
   storage: typeof window !== 'undefined' ? storage : createNoopStorage(),
-  whitelist: ['cart']
+  whitelist: ['cart', 'wishlist']
 }
 
-const rootReducer = combineReducers({ cart: cartReducer })
+const rootReducer = combineReducers({
+  cart: cartReducer,
+  wishlist: wishlistReducer
+})
 
 export const store = configureStore({
   reducer: persistReducer(persistConfig, rootReducer),
