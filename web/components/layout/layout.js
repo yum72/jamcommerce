@@ -1,5 +1,6 @@
 import Head from 'next/head'
 import NavigationHeader from './navigationHeader'
+import AnnouncementBar from './announcementBar'
 import Footer from './footer'
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || 'JAMcommerce'
@@ -27,13 +28,18 @@ export default function Layout ({
   noindex = false,
   navCategories,
   subCategories,
+  searchIndex,
+  promo,
+  /* Pages that open on a full-bleed panel — the home hero — turn off the
+     shell's top padding so the panel starts flush under the header. */
+  flush = false,
   children
 }) {
   const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME
   const url = SITE_URL ? `${SITE_URL}${path}` : undefined
 
   return (
-    <div className='bg-gray-100 antialiased text-gray-900'>
+    <div className='flex min-h-screen flex-col'>
       <Head>
         <meta charSet='utf-8' />
         <meta name='viewport' content='width=device-width, initial-scale=1' />
@@ -64,16 +70,28 @@ export default function Layout ({
         {image && <meta name='twitter:image' content={image} />}
       </Head>
 
-      <div className='max-w-ultra-wide mx-auto min-h-screen'>
-        <NavigationHeader
-          navCategories={navCategories}
-          subCategories={subCategories}
-        />
-        <main id='main' className='px-10 py-6'>
-          {children}
-        </main>
-        <Footer />
-      </div>
+      {/* The bars run the full width of the viewport and only their contents
+          are held to the shell width. Boxing the whole page inside a centred
+          card, which is what the previous max-width wrapper did, left a grey
+          margin down both sides on a wide screen. */}
+      <AnnouncementBar promo={promo} />
+
+      <NavigationHeader
+        navCategories={navCategories}
+        subCategories={subCategories}
+        searchIndex={searchIndex}
+      />
+
+      <main
+        id='main'
+        className={`mx-auto w-full max-w-shell flex-1 px-4 sm:px-6 lg:px-10 ${
+          flush ? '' : 'pt-8'
+        }`}
+      >
+        {children}
+      </main>
+
+      <Footer navCategories={navCategories} subCategories={subCategories} />
     </div>
   )
 }

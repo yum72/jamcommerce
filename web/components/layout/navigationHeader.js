@@ -1,91 +1,126 @@
 import Link from 'next/link'
 import { useSelector } from 'react-redux'
 import { selectCartCount } from '../../redux/cartSlice'
+import { selectWishlistCount } from '../../redux/wishlistSlice'
+import SearchBox from './searchBox'
+import Logo from './logo'
+import { CartIcon, HeartIcon, ChevronDownIcon } from '../ui/icons'
 
-export default function NavigationHeader ({ navCategories, subCategories = [] }) {
+function CountBadge ({ count }) {
+  if (!count) return null
+  return (
+    <span className='absolute top-0 right-0 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-forest-900 px-1 text-[11px] font-bold text-white tabular-nums'>
+      {count}
+    </span>
+  )
+}
+
+export default function NavigationHeader ({
+  navCategories = [],
+  subCategories = [],
+  searchIndex = []
+}) {
   const cartCount = useSelector(selectCartCount)
+  const wishlistCount = useSelector(selectWishlistCount)
+
+  const navLinks = (
+    <>
+      {subCategories.length > 0 && (
+        <div className='dropdown relative'>
+          <button
+            type='button'
+            className='inline-flex cursor-pointer items-center gap-1 whitespace-nowrap'
+            aria-haspopup='true'
+          >
+            Categories
+            <ChevronDownIcon className='h-4 w-4' />
+          </button>
+          <ul className='dropdown-menu absolute left-0 z-50 hidden min-w-48 overflow-hidden rounded-2xl border border-line bg-white py-1.5 shadow-xl'>
+            {subCategories.map(subCat => (
+              <li key={subCat.slug.current}>
+                <Link
+                  href={`/categories/${subCat.slug.current}`}
+                  className='block px-4 py-2 text-sm font-medium whitespace-nowrap transition hover:bg-forest-50 hover:text-forest-900'
+                >
+                  {subCat.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {navCategories.map(category => (
+        <Link
+          key={category.slug.current}
+          href={`/categories/${category.slug.current}`}
+          className='whitespace-nowrap transition hover:text-forest-900'
+        >
+          {category.title}
+        </Link>
+      ))}
+    </>
+  )
 
   return (
-    // Sticky with a translucent blur, so the nav stays reachable on long
-    // category pages instead of scrolling away at the top.
-    <header className='sticky top-0 z-50 border-b border-gray-200/70 bg-gray-100/80 backdrop-blur-md'>
-      <nav className='mx-auto flex items-center gap-8 px-6 py-3 sm:px-10'>
-        {/* No inner <a>. Next 13 onwards renders the anchor itself, so the old
-            <Link><a> pattern was emitting anchors nested inside anchors:
-            invalid HTML, and ambiguous for screen readers and crawlers. */}
-        <Link href='/' className='shrink-0'>
-          <img className='h-12 w-auto' src='/logo.png' alt='JAMcommerce' />
-        </Link>
+    // Sticky so the search field and cart stay reachable down a long category
+    // page. Opaque white rather than a translucent blur: product photography
+    // scrolling underneath a frosted bar made the nav labels hard to read.
+    <header className='sticky top-0 z-50 border-b border-line bg-white'>
+      <div className='mx-auto max-w-shell px-4 sm:px-6 lg:px-10'>
+        <div className='flex h-18 items-center gap-4 lg:gap-8'>
+          <Link href='/' className='shrink-0 text-xl text-forest-900'>
+            <Logo />
+            <span className='sr-only'>home</span>
+          </Link>
 
-        <div className='flex flex-1 flex-wrap items-center gap-6 text-sm font-semibold text-gray-700'>
-          {navCategories?.map(category => (
+          <nav
+            aria-label='Categories'
+            className='hidden items-center gap-7 text-sm font-semibold text-ink lg:flex'
+          >
+            {navLinks}
+          </nav>
+
+          <SearchBox
+            products={searchIndex}
+            className='ml-auto hidden w-full max-w-md md:block'
+          />
+
+          <div className='ml-auto flex shrink-0 items-center gap-1 md:ml-0'>
             <Link
-              key={category.slug.current}
-              href={`/categories/${category.slug.current}`}
-              className='transition hover:text-gray-950'
+              href='/wishlist'
+              className='relative inline-flex items-center gap-2 rounded-full p-2.5 text-sm font-semibold transition hover:bg-tile'
             >
-              {category.title}
+              <HeartIcon />
+              <span className='hidden lg:inline'>Saved</span>
+              <CountBadge count={wishlistCount} />
             </Link>
-          ))}
 
-          {subCategories.length > 0 && (
-            <div className='dropdown relative inline-block'>
-              <button
-                type='button'
-                className='inline-flex cursor-pointer items-center gap-1 font-semibold text-gray-700 transition hover:text-gray-950'
-                aria-haspopup='true'
-              >
-                Categories
-                <svg
-                  className='h-4 w-4 fill-current'
-                  xmlns='http://www.w3.org/2000/svg'
-                  viewBox='0 0 20 20'
-                  aria-hidden='true'
-                >
-                  <path d='M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z' />
-                </svg>
-              </button>
-              <ul className='dropdown-menu absolute left-0 z-50 hidden min-w-44 overflow-hidden rounded-xl bg-white pt-0 shadow-xl ring-1 ring-gray-900/5'>
-                {subCategories.map(subCat => (
-                  <li key={subCat.slug.current}>
-                    <Link
-                      href={`/categories/${subCat.slug.current}`}
-                      className='block whitespace-nowrap px-4 py-2.5 transition hover:bg-gray-100'
-                    >
-                      {subCat.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+            <Link
+              href='/cart'
+              className='relative inline-flex items-center gap-2 rounded-full p-2.5 text-sm font-semibold transition hover:bg-tile'
+            >
+              <CartIcon />
+              <span className='hidden lg:inline'>Cart</span>
+              <CountBadge count={cartCount} />
+            </Link>
+          </div>
         </div>
 
-        <Link
-          href='/cart'
-          className='inline-flex shrink-0 items-center gap-2 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800'
-        >
-          Cart
-          {cartCount > 0 && (
-            <span className='inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-xs font-bold text-gray-900'>
-              {cartCount}
-            </span>
-          )}
-        </Link>
-      </nav>
+        {/* Below md the search field and the category links each get their own
+            row. Cramming four things into one row on a phone is what produced
+            the old wrapping nav that pushed the cart button off screen. */}
+        <div className='pb-3 md:hidden'>
+          <SearchBox products={searchIndex} />
+        </div>
 
-      <style jsx>{`
-        /* A small padding bridge so the pointer can cross the gap between the
-           trigger and the menu without the menu closing underneath it. */
-        .dropdown:hover .dropdown-menu,
-        .dropdown:focus-within .dropdown-menu {
-          display: block;
-        }
-        .dropdown-menu {
-          top: 100%;
-          margin-top: 0.5rem;
-        }
-      `}</style>
+        <nav
+          aria-label='Categories'
+          className='-mx-4 flex items-center gap-6 overflow-x-auto border-t border-line px-4 py-3 text-sm font-semibold text-ink sm:-mx-6 sm:px-6 lg:hidden'
+        >
+          {navLinks}
+        </nav>
+      </div>
     </header>
   )
 }
