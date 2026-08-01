@@ -7,6 +7,7 @@ import { Provider } from 'react-redux'
 import { ToastContainer } from 'react-toastify'
 
 import { store } from '../redux/store'
+import { loadPersisted, startPersisting, hydrate } from '../redux/persist'
 import '../styles/index.css'
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -32,6 +33,17 @@ const jakarta = Plus_Jakarta_Sans({
 
 export default function MyApp ({ Component, pageProps }) {
   const router = useRouter()
+
+  // The cart is restored after mount, never during render. Reading localStorage
+  // while rendering would make the first client render disagree with the
+  // prerendered HTML, which React treats as a hydration error. Loading first
+  // and subscribing second matters: the other order writes the empty starting
+  // state over the saved one before it has been read.
+  useEffect(() => {
+    const saved = loadPersisted()
+    if (saved) store.dispatch(hydrate(saved))
+    return startPersisting(store)
+  }, [])
 
   // Snipcart's cart is a fixed overlay that does not know about client-side
   // navigation, so clicking a nav link behind it changed the page while the
