@@ -1,74 +1,85 @@
-// import Head from 'next/head'
 import ProductsContainer from '../components/productsContainer'
 import sanityClient from '../lib/sanity'
+import { getLayoutProps } from '../lib/layoutData'
 import Layout from '../components/layout/layout'
 import HeroSection from '../components/home/heroSection'
+import CategoryRail from '../components/home/categoryRail'
 import CategoriesSection from '../components/home/categoriesSection'
 
 export default function Home ({
   allProductsData,
-  navCategories,
   heroSection,
   categoriesSectionData,
-  subCategories
+  popularCategories,
+  ...layout
 }) {
   return (
-    <div>
-      <Layout
-        title={null}
-        description={heroSection?.title
+    <Layout
+      title={null}
+      description={
+        heroSection?.title
           ? `${heroSection.title}. Shop cameras, phones and more, with photos, prices and details for every product.`
-          : 'Shop cameras, phones and more, with photos, prices and details for every product.'}
-        path='/'
-        navCategories={navCategories}
-        subCategories={subCategories}
-      >
+          : 'Shop cameras, phones and more, with photos, prices and details for every product.'
+      }
+      path='/'
+      flush
+      {...layout}
+    >
+      <div className='pt-6'>
         <HeroSection heroSection={heroSection} />
-        <CategoriesSection categoriesSectionData={categoriesSectionData} />
-        <ProductsContainer
-          products={allProductsData}
-          title={'Latest Products'}
-        />
-      </Layout>
-      <style jsx>{`
-        .snipcart-cart-button--highlight {
-          background: none;
-          background-color: black;
-        }
-      `}</style>
-    </div>
+      </div>
+      <CategoryRail categories={popularCategories} />
+      <ProductsContainer products={allProductsData} title='New in' />
+      <CategoriesSection categoriesSectionData={categoriesSectionData} />
+    </Layout>
   )
 }
 
 export const getStaticProps = async () => {
-  let query = `*[_type == 'product']{ slug, _createdAt, title, defaultProductVariant}[0...10]`
-  const allProductsData = await sanityClient.fetch(query)
+  // "category" as a plain string is all a card renders, so the whole array of
+  // resolved category documents does not need to travel with every product.
+  const productFields = `_id, slug, _createdAt, title, defaultProductVariant, "category": categories[0]->title`
 
-  let catQuery = `*[_type == "category" && isOnNav == true]{slug, title}`
-  const navCategories = await sanityClient.fetch(catQuery)
-
-  let heroSectionQuery = `*[_type == "heroSection" && isActive == true]{title, buttonText, description, heroImage, heroButtonCategory[0]->{title, slug}}[0]`
-  const heroSection = await sanityClient.fetch(heroSectionQuery)
-
-  let categoriesSectionDataQuery = `*[_type == "category" && isOnNav == true]{
-    "products": *[_type == "product" && references(^._id)]
-    {slug, _createdAt, title, defaultProductVariant}[0...5],
-    "category": {slug{current}, title}
-  }`
-  const categoriesSectionData = await sanityClient.fetch(
-    categoriesSectionDataQuery
-  )
-
-  let subCategoriesQuery = `*[_type == "category" && defined(parents)]{title, slug}`
-  const subCategories = await sanityClient.fetch(subCategoriesQuery)
+  const [
+    allProductsData,
+    heroSection,
+    categoriesSectionData,
+    popularCategories,
+    layout
+  ] = await Promise.all([
+    sanityClient.fetch(
+      `*[_type == 'product'] | order(_createdAt desc){${productFields}}[0...8]`
+    ),
+    sanityClient.fetch(
+      `*[_type == "heroSection" && isActive == true]{title, buttonText, description, heroImage, heroButtonCategory[0]->{title, slug}}[0]`
+    ),
+    sanityClient.fetch(
+      `*[_type == "category" && isOnNav == true]{
+        "products": *[_type == "product" && references(^._id)]{${productFields}}[0...4],
+        "category": {slug{current}, title}
+      }`
+    ),
+    // Only categories that actually have something in them, biggest first, each
+    // with a real product photo and a real count. The old flat list linked to
+    // several categories that led to an empty page.
+    sanityClient.fetch(
+      `*[_type == "category" && count(*[_type == "product" && references(^._id)]) > 0]{
+        title,
+        "slug": slug.current,
+        "count": count(*[_type == "product" && references(^._id)]),
+        "image": *[_type == "product" && references(^._id)][0].defaultProductVariant.images[0]
+      } | order(count desc)[0...6]`
+    ),
+    getLayoutProps()
+  ])
 
   return {
     props: {
       allProductsData,
-      navCategories,
-      heroSection,
+      heroSection: heroSection ?? null,
       categoriesSectionData,
-      subCategories
-    } // will be passed to the page component as props
+      popularCategories,
+      ...layout
+    }
   }
 }

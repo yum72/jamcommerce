@@ -1,27 +1,49 @@
+import Link from 'next/link'
 import SingleProduct from './singleProduct'
 
-export default function ProductsContainer ({ title = '', products = [] }) {
+/**
+ * A titled row of product cards.
+ *
+ * The grid is a fixed four columns at the top breakpoint rather than auto-fill,
+ * because auto-fill let a category with five products lay out as five narrow
+ * columns on one screen and three-plus-two on another. Four, two, one is the
+ * same shape everywhere.
+ */
+export default function ProductsContainer ({
+  title = '',
+  products = [],
+  viewAllHref,
+  emptyMessage = 'Nothing here yet.'
+}) {
   return (
     <section className='py-8'>
       {title !== '' && (
-        <div className='mb-8 flex items-center gap-4'>
-          <h2 className='text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl'>
+        <div className='mb-7 flex items-end justify-between gap-4'>
+          <h2 className='font-display text-2xl font-extrabold tracking-tight sm:text-3xl'>
             {title}
           </h2>
-          {/* A rule that fills the remaining space, rather than the old
-              centred 1/3-width <hr> that floated unattached to anything. */}
-          <div className='h-px flex-1 bg-gray-300' />
+          {viewAllHref && (
+            <Link
+              href={viewAllHref}
+              className='shrink-0 text-sm font-semibold text-ink-muted underline-offset-4 transition hover:text-forest-900 hover:underline'
+            >
+              View all
+            </Link>
+          )}
         </div>
       )}
 
-      {/* Grid rather than flex-wrap with centre justification. Wrapped rows
-          were centring their leftovers, so the last row of an eight-product
-          category sat in the middle of the page under a left-aligned grid. */}
-      <div className='grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] justify-items-center gap-6'>
-        {products.map(product => (
-          <SingleProduct key={product.slug.current} product={product} />
-        ))}
-      </div>
+      {products.length === 0 ? (
+        <p className='rounded-2xl bg-tile px-6 py-12 text-center text-ink-muted'>
+          {emptyMessage}
+        </p>
+      ) : (
+        <div className='grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-3 xl:grid-cols-4'>
+          {products.map(product => (
+            <SingleProduct key={product.slug.current} product={product} />
+          ))}
+        </div>
+      )}
     </section>
   )
 }
