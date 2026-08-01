@@ -1,33 +1,119 @@
-/* Only the weights actually used. The previous import pulled all 14 Nunito
-   weights including italics, which is roughly ten times the bytes for a font
-   that was not even being applied. */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-
 /* Tailwind 4 is CSS-first: one import replaces the three @tailwind directives,
    and theme values live here instead of in tailwind.config.js. */
 @import 'tailwindcss';
 
 @theme {
-  /* --font-sans rather than a custom --font-body. The old config defined a
-     `body` family that nothing ever referenced, so the site loaded Nunito and
-     then rendered in the system font anyway. Overriding sans applies it
+  /* Two families with distinct jobs. Plus Jakarta Sans is geometric and heavy
+     at 800, so it carries headings, prices and buttons; Inter is a neutral
+     grotesque that stays quiet at 14px, so it carries body copy and UI labels.
+     Both are loaded through next/font in _app.js, which self-hosts them and
+     sets these variables — no render-blocking request to fonts.googleapis.com.
+
+     --font-sans rather than a custom name: overriding sans applies Inter
      everywhere without having to tag each element. */
-  --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
-  --height-cover: 40rem;
-  --max-width-ultra-wide: 95rem;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), var(--font-inter), ui-sans-serif, sans-serif;
+
+  /* Deep forest green is the whole brand. Sampled from the reference design:
+     the announcement bar, primary buttons and footer are all --color-forest-900,
+     with 950 for hover and 100 for tinted backgrounds. */
+  --color-forest-950: #012418;
+  --color-forest-900: #023d29;
+  --color-forest-800: #04543a;
+  --color-forest-600: #1b7a58;
+  --color-forest-100: #e4f0ea;
+  --color-forest-50: #f2f8f5;
+
+  /* Warm cream, used only for the hero panel and category tiles. It is the one
+     warm note against an otherwise white and green page, so it marks the two
+     places that are meant to feel like display space rather than catalogue. */
+  --color-cream-100: #faede0;
+  --color-cream-50: #fdf7f1;
+
+  /* Product photography sits on this, never on white. Every image in the
+     catalogue is shot on a different background, and a uniform tile is what
+     makes a grid of them read as one grid. */
+  --color-tile: #f5f5f5;
+  --color-line: #e8e8e8;
+  --color-ink: #111111;
+  --color-ink-muted: #5f5f5f;
+
+  --max-width-shell: 90rem;
 }
 
-.btn-blue {
-  @apply bg-blue-500 text-white font-bold py-2 px-4 rounded;
+@layer base {
+  body {
+    @apply bg-white text-ink antialiased;
+  }
+
+  /* Every interactive element gets the same visible ring. The previous styles
+     set focus rings per component, so several buttons had none at all. */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-forest-900;
+  }
 }
 
+@layer components {
+  /* The two button shapes the whole site uses: a filled forest pill for the
+     primary action and a hairline outline pill for the secondary one. */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full font-display
+           font-bold whitespace-nowrap transition disabled:pointer-events-none
+           disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-forest-900 text-white hover:bg-forest-950;
+  }
+
+  .btn-outline {
+    @apply border border-forest-900 bg-white text-forest-900 hover:bg-forest-900 hover:text-white;
+  }
+}
+
+/* The Categories menu in the header.
+ *
+ * Global rather than a styled-jsx block in the header component. styled-jsx
+ * rewrites these selectors to .dropdown.jsx-HASH and adds the matching class to
+ * elements it finds in the returned JSX — but the header builds its nav into a
+ * variable and renders it twice, and elements reached that way never get the
+ * class, so the rules match nothing and the menu cannot be opened at all.
+ *
+ * Unlayered, so they win against Tailwind's `hidden` in @layer utilities, which
+ * is what keeps the menu closed to begin with. Hover opens it; :focus-within
+ * opens it for the keyboard and for a tap, since a tap focuses the button. */
+.dropdown:hover .dropdown-menu,
+.dropdown:focus-within .dropdown-menu {
+  display: block;
+}
+
+.dropdown-menu {
+  top: calc(100% + 0.75rem);
+}
+
+/* Bridges the gap between the trigger and the menu, so the pointer can travel
+   between them without crossing dead space and closing the menu on the way. */
+.dropdown::after {
+  content: '';
+  position: absolute;
+  inset: 100% 0 auto 0;
+  height: 0.75rem;
+}
+
+/* Snipcart ships its own stylesheet and knows nothing about this theme, so its
+   checkout arrives in default blue. These override the handful of surfaces a
+   customer actually looks at, so the checkout does not read as a different
+   site than the one they were just on. */
+.snipcart-button-primary,
 .snipcart-cart-button--highlight {
-  background: none;
-  @apply bg-gray-800;
+  background: var(--color-forest-900) !important;
+  border-color: var(--color-forest-900) !important;
 }
 
+.snipcart-button-primary:hover,
 .snipcart-cart-button--highlight:hover {
-  @apply bg-gray-900;
+  background: var(--color-forest-950) !important;
+  border-color: var(--color-forest-950) !important;
 }
 
 /* Snipcart's modal is fixed at z-index 20, which sits below the sticky site
@@ -40,4 +126,14 @@
 .snipcart-modal__container,
 .snipcart-modal {
   z-index: 9999 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

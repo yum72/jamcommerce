@@ -2,15 +2,33 @@ import { useEffect } from 'react'
 import Head from 'next/head'
 import Script from 'next/script'
 import { useRouter } from 'next/router'
+import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import { Provider } from 'react-redux'
 import { ToastContainer } from 'react-toastify'
 
 import { store } from '../redux/store'
 import '../styles/index.css'
-import 'react-image-gallery/styles/css/image-gallery.css'
 import 'react-toastify/dist/ReactToastify.css'
 
 const SNIPCART_API_KEY = process.env.NEXT_PUBLIC_SNIPCART_API_KEY
+
+// Self-hosted through next/font rather than an @import in the stylesheet. The
+// @import made every page wait on a round trip to fonts.googleapis.com before
+// it could paint, and it pulled all fourteen Nunito weights for a font the old
+// Tailwind config never actually applied. These ship from the site's own
+// origin, preloaded, subset to latin, with only the weights in use.
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap'
+})
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['500', '700', '800'],
+  variable: '--font-jakarta',
+  display: 'swap'
+})
 
 export default function MyApp ({ Component, pageProps }) {
   const router = useRouter()
@@ -67,7 +85,12 @@ export default function MyApp ({ Component, pageProps }) {
           it. The previous version worked around the blank page by passing the
           page itself as PersistGate's loading prop, which rendered the whole
           tree twice. */}
-      <Component {...pageProps} />
+      {/* The font variables live on a wrapper the whole app is inside, so the
+          --font-inter and --font-jakarta that the Tailwind theme resolves are
+          in scope for every component beneath it. */}
+      <div className={`${inter.variable} ${jakarta.variable} font-sans`}>
+        <Component {...pageProps} />
+      </div>
 
       {/* Mounted once here rather than inside a page. Per-page containers get
           unmounted mid client-side navigation while react-toastify still holds
