@@ -4,7 +4,7 @@ A JAMstack storefront: Next.js prerenders every page from a Sanity catalogue at
 build time, so the whole shop ships as static files with no server behind it.
 The cart runs in the browser and works without any payment provider attached.
 
-**Status:** working, completed and modernized 2026 · Node 20+
+**Status:** working · Node 20+
 
 Two apps in one repo. `studio/` is where products are edited; `web/` is the
 storefront that reads them.
@@ -69,7 +69,7 @@ Next.js 15, React 19, Sanity Studio 6, Redux Toolkit 2, Tailwind 4.
 | **Next.js**, Pages Router, SSG | Every product and category page is prerendered at build. Static files, no server, and full HTML for crawlers on the first request. |
 | **Sanity** | The catalogue is edited in a real CMS, not in code, so adding a product does not need a developer. Its CDN is free to read from and content is queried with GROQ rather than assembled by hand. |
 | **Portable Text** | Product descriptions are stored as structured data rather than an HTML blob, so the same copy can be rendered differently on web, in an app, or in a feed. |
-| **Redux Toolkit** + redux-persist | The cart is the only real client state. RTK keeps it to one small slice, and only that slice is persisted, so a refresh keeps the cart without freezing everything else. |
+| **Redux Toolkit** | The cart and the saved-items list are the only client state. Each is one small slice, persisted to `localStorage` by a short store subscription rather than a dependency. |
 | **Tailwind 4** | CSS-first config, and only the utilities actually used end up in the bundle. |
 | **Snipcart**, optional | Real checkout when you want it, without building payments. Not loaded at all when no key is set. |
 
@@ -78,11 +78,9 @@ Next.js 15, React 19, Sanity Studio 6, Redux Toolkit 2, Tailwind 4.
 Static generation is only half of it. Getting indexed well needs the pages to
 actually say something:
 
-- **Per-page titles and descriptions.** Every page previously rendered
-  `<title>Store</title>` with no description, so all 26 were identical in search
-  results. Titles now come from the product, category or hero.
-- **One `<h1>` per page**, carrying the product or category name. There were
-  none at all before.
+- **Per-page titles and descriptions**, taken from the product, category or
+  hero, so no two pages compete for the same search result.
+- **One `<h1>` per page**, carrying the product or category name.
 - **Product structured data** (JSON-LD) on every product page, with price,
   availability and image, which is what puts price and stock into the search
   result itself instead of a plain blue link.
@@ -154,36 +152,19 @@ from. `heroSection` drives the home page banner, and only the one flagged active
 is used. `vendor` is available for attribution.
 
 Titles and descriptions use locale objects, so `title.en` rather than `title`, in
-case a second language is needed later.
+case a second language is needed later. `barcode` is a plain object type holding
+the format and value; it is not rendered anywhere by default.
 
-## Notes on the 2026 rewrite
+## Design
 
-The public version of this repo stopped in 2020 with the header, footer, cart
-and styling unbuilt. Those were finished in a private branch, and this brings
-that work across and modernizes it: Next 9 to 15, React 16 to 19, Sanity Studio
-v1 to v6, Tailwind 1 to 4, and hand-written Redux to Redux Toolkit.
+The palette is a deep forest green with warm cream for the hero and category
+tiles, and one flat grey that all product photography sits on. Headings, prices
+and buttons are set in Plus Jakarta Sans; body copy is Inter. Both are
+self-hosted through `next/font`, so no page waits on a request to Google Fonts
+before it can paint.
 
-Three things worth knowing if you compare against the old code.
-
-The Sanity project ID and the Snipcart key were hardcoded in source. Both are
-public in the sense that they ship to the browser, but both point at specific
-accounts, so they are environment variables now.
-
-The old `_app.js` passed the page itself as `PersistGate`'s `loading` prop, which
-rendered the whole tree twice. Gating on rehydration at all is the wrong call
-here: it makes the prerendered HTML of every page empty, which throws away the
-reason to use static generation on a storefront. There is no `PersistGate` now;
-the cart rehydrates a moment after mount and the badge updates then.
-
-The barcode field was a Sanity v1 plugin whose custom input drew a live barcode.
-The part system it relied on no longer exists, so it is a plain object type with
-the same shape. Existing documents read back fine.
-
-The interface was then redesigned around a forest green and cream palette, with
-Plus Jakarta Sans for headings and prices and Inter for body copy, both
-self-hosted through `next/font`. Design tokens live in `web/styles/index.css`
-under Tailwind 4's `@theme`, so the palette and the two font stacks are changed
-in one place.
+Every colour and both font stacks are defined once in `web/styles/index.css`
+under Tailwind 4's `@theme`, which is the only file to open to reskin the store.
 
 ## License
 
