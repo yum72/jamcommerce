@@ -2,73 +2,90 @@ import Link from 'next/link'
 import { useSelector } from 'react-redux'
 import { selectCartCount } from '../../redux/cartSlice'
 
-export default function NavigationHeader ({ navCategories, subCategories }) {
+export default function NavigationHeader ({ navCategories, subCategories = [] }) {
   const cartCount = useSelector(selectCartCount)
 
   return (
-    <div>
-      <nav className='px-10 pt-1 text-gray-700 font-semibold flex items-end flex-wrap'>
-        <Link href='/'>
-          <a>
-            <img className='h-16 pr-16 pt-5 pb-1' src='/logo.png' alt='logo' />
-          </a>
+    // Sticky with a translucent blur, so the nav stays reachable on long
+    // category pages instead of scrolling away at the top.
+    <header className='sticky top-0 z-50 border-b border-gray-200/70 bg-gray-100/80 backdrop-blur-md'>
+      <nav className='mx-auto flex items-center gap-8 px-6 py-3 sm:px-10'>
+        {/* No inner <a>. Next 13 onwards renders the anchor itself, so the old
+            <Link><a> pattern was emitting anchors nested inside anchors:
+            invalid HTML, and ambiguous for screen readers and crawlers. */}
+        <Link href='/' className='shrink-0'>
+          <img className='h-12 w-auto' src='/logo.png' alt='JAMcommerce' />
         </Link>
-        <div className='flex-grow flex items-center w-auto flex-wrap'>
-          <div className='flex flex-grow flex-wrap justify-start my-auto py-2 pr-4'>
-            {navCategories
-              ? navCategories.map(category => (
-                  <Link
-                    key={category.slug.current}
-                    href='/categories/[category]'
-                    as={`/categories/${category.slug.current}`}
-                  >
-                    <a className='pr-10 py-1'>{category.title}</a>
-                  </Link>
-                ))
-              : null}
 
-            <div className='dropdown inline-block relative py-1'>
-              <div className='text-gray-700 cursor-pointer font-semibold rounded inline-flex items-center'>
-                <span className='mr-1'>Categories</span>
+        <div className='flex flex-1 flex-wrap items-center gap-6 text-sm font-semibold text-gray-700'>
+          {navCategories?.map(category => (
+            <Link
+              key={category.slug.current}
+              href={`/categories/${category.slug.current}`}
+              className='transition hover:text-gray-950'
+            >
+              {category.title}
+            </Link>
+          ))}
+
+          {subCategories.length > 0 && (
+            <div className='dropdown relative inline-block'>
+              <button
+                type='button'
+                className='inline-flex cursor-pointer items-center gap-1 font-semibold text-gray-700 transition hover:text-gray-950'
+                aria-haspopup='true'
+              >
+                Categories
                 <svg
-                  className='fill-current h-4 w-4'
+                  className='h-4 w-4 fill-current'
                   xmlns='http://www.w3.org/2000/svg'
                   viewBox='0 0 20 20'
+                  aria-hidden='true'
                 >
-                  <path d='M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z' />{' '}
+                  <path d='M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z' />
                 </svg>
-              </div>
-              <ul className='dropdown-menu z-50 absolute hidden text-gray-700 pt-1'>
+              </button>
+              <ul className='dropdown-menu absolute left-0 z-50 hidden min-w-44 overflow-hidden rounded-xl bg-white pt-0 shadow-xl ring-1 ring-gray-900/5'>
                 {subCategories.map(subCat => (
                   <li key={subCat.slug.current}>
                     <Link
-                      href='/categories/[category]'
-                      as={`/categories/${subCat.slug.current}`}
+                      href={`/categories/${subCat.slug.current}`}
+                      className='block whitespace-nowrap px-4 py-2.5 transition hover:bg-gray-100'
                     >
-                      <a className='rounded-t bg-gray-200 hover:bg-gray-400 py-2 px-4 block whitespace-no-wrap'>
-                        {subCat.title}
-                      </a>
+                      {subCat.title}
                     </Link>
                   </li>
                 ))}
               </ul>
             </div>
-          </div>
-          <Link href='/cart'>
-            <span className='cursor-pointer'>
-              Checkout Cart
-              {cartCount > 0 && (
-                <span className='text-red-500 pl-1'>({cartCount})</span>
-              )}
-            </span>
-          </Link>
+          )}
         </div>
+
+        <Link
+          href='/cart'
+          className='inline-flex shrink-0 items-center gap-2 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800'
+        >
+          Cart
+          {cartCount > 0 && (
+            <span className='inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-xs font-bold text-gray-900'>
+              {cartCount}
+            </span>
+          )}
+        </Link>
       </nav>
+
       <style jsx>{`
-        .dropdown:hover .dropdown-menu {
+        /* A small padding bridge so the pointer can cross the gap between the
+           trigger and the menu without the menu closing underneath it. */
+        .dropdown:hover .dropdown-menu,
+        .dropdown:focus-within .dropdown-menu {
           display: block;
         }
+        .dropdown-menu {
+          top: 100%;
+          margin-top: 0.5rem;
+        }
       `}</style>
-    </div>
+    </header>
   )
 }

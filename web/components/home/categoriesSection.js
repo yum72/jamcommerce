@@ -1,24 +1,28 @@
 import ProductsContainer from '../productsContainer'
 import Link from 'next/link'
 
-export default function CategoriesSection ({ categoriesSectionData }) {
+export default function CategoriesSection ({ categoriesSectionData = [] }) {
   return (
     <div>
-      <div>
-        {categoriesSectionData.map(section => (
-          <div key={section.category.title}>
-            <Link
-              href='/categories/[category]'
-              as={`/categories/${section.category.slug.current}`}
-            >
-              <a className='pt-16 text-4xl tracking-tight leading-10 font-bold text-gray-800 hover:text-blue-600 flex justify-center'>
+      {categoriesSectionData
+        .filter(section => section.products?.length)
+        .map(section => (
+          <section key={section.category.title} className='pt-8'>
+            <div className='mb-8 flex items-baseline gap-4'>
+              <h2 className='text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl'>
                 {section.category.title}
-              </a>
-            </Link>
+              </h2>
+              <div className='h-px flex-1 self-center bg-gray-300' />
+              <Link
+                href={`/categories/${section.category.slug.current}`}
+                className='shrink-0 text-sm font-semibold text-gray-600 transition hover:text-gray-900'
+              >
+                View all &rarr;
+              </Link>
+            </div>
             <ProductsContainer products={section.products} />
-          </div>
+          </section>
         ))}
-      </div>
     </div>
   )
 }

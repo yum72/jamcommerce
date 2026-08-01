@@ -17,6 +17,19 @@ const portableTextComponents = {
   }
 }
 
+/**
+ * Home page hero.
+ *
+ * Rebuilt as a single stacking context: the image fills the section, a gradient
+ * scrim sits over it, and the copy sits on top in normal flow. The previous
+ * version positioned the image at `inset-y-20` and floated a fixed-width panel
+ * over it absolutely, so the two drifted apart at most widths and the panel
+ * covered the subject of the photo.
+ *
+ * The scrim matters beyond looks: hero images come from the CMS and can be any
+ * colour, so dark text over a raw photo is a coin flip. White on a gradient is
+ * legible whatever gets uploaded.
+ */
 export default function HeroSection ({ heroSection }) {
   const {
     buttonText,
@@ -27,53 +40,58 @@ export default function HeroSection ({ heroSection }) {
   } = heroSection
 
   return (
-    <div className='relative h-cover'>
-      <div className='z-0 absolute inset-y-20 left-0'>
-        {heroImage && (
-          <div>
-            <img
-              className='w-full h-cover object-cover object-center'
-              src={urlFor(heroImage)
-                .width(1800)
-                .url()}
-              alt={title || 'Featured promotion'}
-              /* The hero is the largest above-the-fold image, so it is the
-                 Largest Contentful Paint element. Eager and high priority
-                 rather than lazy. */
-              loading='eager'
-              fetchPriority='high'
-              width='1800'
-              height='640'
-            />
-          </div>
-        )}
-      </div>
+    <section className='relative isolate overflow-hidden rounded-3xl shadow-xl'>
+      {heroImage && (
+        <img
+          className='absolute inset-0 -z-10 h-full w-full object-cover object-center'
+          src={urlFor(heroImage).width(1800).url()}
+          alt={title || 'Featured promotion'}
+          /* The hero is the largest above-the-fold image, so it is the Largest
+             Contentful Paint element. Eager and high priority, not lazy. */
+          loading='eager'
+          fetchPriority='high'
+          width='1800'
+          height='700'
+        />
+      )}
 
-      <main className='absolute mx-10 mt-10 w-2/3 max-w-2xl sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28 bg-gray-100/25 backdrop-blur-sm'>
-        <div className='sm:text-center lg:text-left p-6'>
-          <h1 className='text-4xl tracking-tight leading-10 font-bold text-gray-800 sm:text-5xl sm:leading-none md:text-6xl'>
+      {/* Strong on the left where the copy sits, clearing towards the right so
+          the photograph is still the photograph. */}
+      <div className='absolute inset-0 -z-10 bg-gradient-to-r from-gray-950/85 via-gray-950/60 to-gray-950/10' />
+
+      <div className='flex min-h-[26rem] items-center px-6 py-16 sm:px-10 md:min-h-[34rem] md:px-16'>
+        <div className='max-w-xl'>
+          <span className='inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-widest text-white uppercase ring-1 ring-white/25 ring-inset backdrop-blur-sm'>
+            Featured
+          </span>
+
+          <h1 className='mt-5 text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl'>
             {title}
           </h1>
-          <div className='mt-3 text-base pr-60 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0 text-gray-800'>
+
+          <div className='mt-5 text-lg leading-relaxed text-gray-200 md:text-xl'>
             <PortableText
               value={description ?? []}
               components={portableTextComponents}
             />
           </div>
-          <div className='mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start'>
-            <div>
-              <Link
-                href='/categories/[category]'
-                as={`/categories/${heroButtonCategory.slug.current}`}
+
+          {heroButtonCategory?.slug?.current && (
+            <Link
+              href={`/categories/${heroButtonCategory.slug.current}`}
+              className='group mt-8 inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 text-base font-semibold text-gray-900 shadow-lg transition hover:-translate-y-0.5 hover:bg-gray-100 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 md:text-lg'
+            >
+              {buttonText || 'Shop now'}
+              <span
+                aria-hidden='true'
+                className='transition-transform group-hover:translate-x-1'
               >
-                <a className='w-full flex items-center justify-center px-2 sm:px-8 py-3 border border-transparent text-base leading-6 font-medium rounded text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 transition duration-150 ease-in-out md:py-4 md:text-lg md:px-10 shadow-lg'>
-                  {buttonText}
-                </a>
-              </Link>
-            </div>
-          </div>
+                &rarr;
+              </span>
+            </Link>
+          )}
         </div>
-      </main>
-    </div>
+      </div>
+    </section>
   )
 }

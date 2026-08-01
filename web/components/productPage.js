@@ -117,17 +117,15 @@ export default function ProductPage ({ product }) {
           <div className='text-lg pt-4 text-gray-700 font-semibold'>
             {categories.length > 1 ? 'Categories: ' : 'Category: '}
             {categories.map((category, i) => (
-              <Link
-                key={category.title}
-                href='/categories/[category]'
-                as={`/categories/${category.slug.current}`}
-              >
-                {categories.length > i + 1 ? (
-                  <a className='text-red-500'>{category.title}, </a>
-                ) : (
-                  <a className='text-red-500'>{category.title}</a>
-                )}
-              </Link>
+              <span key={category.title}>
+                <Link
+                  href={`/categories/${category.slug.current}`}
+                  className='text-red-500 underline-offset-2 hover:underline'
+                >
+                  {category.title}
+                </Link>
+                {categories.length > i + 1 ? ', ' : ''}
+              </span>
             ))}
           </div>
           <div className='flex mt-10'>
