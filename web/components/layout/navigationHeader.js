@@ -63,64 +63,75 @@ export default function NavigationHeader ({
   )
 
   return (
-    // Sticky so the search field and cart stay reachable down a long category
-    // page. Opaque white rather than a translucent blur: product photography
-    // scrolling underneath a frosted bar made the nav labels hard to read.
-    <header className='sticky top-0 z-50 border-b border-line bg-white'>
-      <div className='mx-auto max-w-shell px-4 sm:px-6 lg:px-10'>
-        <div className='flex h-18 items-center gap-4 lg:gap-8'>
-          <Link href='/' className='shrink-0 text-xl text-forest-900'>
-            <Logo />
-            <span className='sr-only'>home</span>
-          </Link>
+    <>
+      {/* Sticky so the search field and the cart stay reachable down a long
+          category page. Opaque white rather than a translucent blur: product
+          photography scrolling underneath a frosted bar made the nav labels
+          hard to read.
+
+          Only this row is sticky. Below lg the search field and the category
+          links sit in their own rows outside it, because pinning all three
+          parked 174px — a fifth of a phone screen — permanently at the top. */}
+      <header className='sticky top-0 z-50 border-b border-line bg-white'>
+        <div className='mx-auto max-w-shell px-4 sm:px-6 lg:px-10'>
+          <div className='flex h-18 items-center gap-4 lg:gap-8'>
+            <Link href='/' className='shrink-0 text-xl text-forest-900'>
+              <Logo />
+              <span className='sr-only'>home</span>
+            </Link>
+
+            <nav
+              aria-label='Categories'
+              className='hidden items-center gap-7 text-sm font-semibold text-ink lg:flex'
+            >
+              {navLinks}
+            </nav>
+
+            <SearchBox
+              products={searchIndex}
+              className='ml-auto hidden w-full max-w-md md:block'
+            />
+
+            <div className='ml-auto flex shrink-0 items-center gap-1 md:ml-0'>
+              <Link
+                href='/wishlist'
+                className='relative inline-flex items-center gap-2 rounded-full p-2.5 text-sm font-semibold transition hover:bg-tile'
+              >
+                <HeartIcon />
+                <span className='hidden lg:inline'>Saved</span>
+                <CountBadge count={wishlistCount} />
+              </Link>
+
+              <Link
+                href='/cart'
+                className='relative inline-flex items-center gap-2 rounded-full p-2.5 text-sm font-semibold transition hover:bg-tile'
+              >
+                <CartIcon />
+                <span className='hidden lg:inline'>Cart</span>
+                <CountBadge count={cartCount} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Below lg the search field and the category links each get their own
+          row. Cramming four things into one row on a phone is what produced the
+          old wrapping nav that pushed the cart button off screen. */}
+      <div className='border-b border-line bg-white lg:hidden'>
+        <div className='mx-auto max-w-shell px-4 pt-3 sm:px-6'>
+          <div className='md:hidden'>
+            <SearchBox products={searchIndex} />
+          </div>
 
           <nav
             aria-label='Categories'
-            className='hidden items-center gap-7 text-sm font-semibold text-ink lg:flex'
+            className='flex items-center gap-6 overflow-x-auto py-3 text-sm font-semibold text-ink'
           >
             {navLinks}
           </nav>
-
-          <SearchBox
-            products={searchIndex}
-            className='ml-auto hidden w-full max-w-md md:block'
-          />
-
-          <div className='ml-auto flex shrink-0 items-center gap-1 md:ml-0'>
-            <Link
-              href='/wishlist'
-              className='relative inline-flex items-center gap-2 rounded-full p-2.5 text-sm font-semibold transition hover:bg-tile'
-            >
-              <HeartIcon />
-              <span className='hidden lg:inline'>Saved</span>
-              <CountBadge count={wishlistCount} />
-            </Link>
-
-            <Link
-              href='/cart'
-              className='relative inline-flex items-center gap-2 rounded-full p-2.5 text-sm font-semibold transition hover:bg-tile'
-            >
-              <CartIcon />
-              <span className='hidden lg:inline'>Cart</span>
-              <CountBadge count={cartCount} />
-            </Link>
-          </div>
         </div>
-
-        {/* Below md the search field and the category links each get their own
-            row. Cramming four things into one row on a phone is what produced
-            the old wrapping nav that pushed the cart button off screen. */}
-        <div className='pb-3 md:hidden'>
-          <SearchBox products={searchIndex} />
-        </div>
-
-        <nav
-          aria-label='Categories'
-          className='-mx-4 flex items-center gap-6 overflow-x-auto border-t border-line px-4 py-3 text-sm font-semibold text-ink sm:-mx-6 sm:px-6 lg:hidden'
-        >
-          {navLinks}
-        </nav>
       </div>
-    </header>
+    </>
   )
 }
