@@ -1,23 +1,44 @@
 # JAMcommerce
 
-A JAMstack storefront: Next.js reading products from Sanity, statically
-generated, with a cart that works without any payment provider attached.
+A JAMstack storefront: Next.js prerenders every page from a Sanity catalogue at
+build time, so the whole shop ships as static files with no server behind it.
+The cart runs in the browser and works without any payment provider attached.
 
 **Status:** working, completed and modernized 2026 · Node 20+
 
 Two apps in one repo. `studio/` is where products are edited; `web/` is the
 storefront that reads them.
 
-## Why this exists
+## What JAMstack means here
 
-Most storefront starters make you choose between two bad options: a
-server-rendered app you have to keep running and paying for, or a client-side
-SPA that ships an empty page to Google.
+JAMstack is JavaScript, APIs and Markup: pages are built to static markup ahead
+of time, and anything dynamic is added in the browser by calling APIs. No
+application server sits in the request path.
 
-This is the third option. Product data lives in a CMS a non-developer can edit,
-every page is built to static HTML at deploy time, and the result is a folder of
-files a CDN serves for nothing. There is no server to keep alive, no database to
-back up, and no cold start. A crawler gets the finished page on first request.
+This repo is a worked example of that for a shop, which is the case people
+usually assume needs a server:
+
+| Layer | Here |
+|---|---|
+| **Markup** | Next.js prerenders every product and category page to static HTML at deploy. |
+| **APIs** | Sanity supplies the catalogue at build; Snipcart handles checkout in the browser. |
+| **JavaScript** | The cart lives entirely client-side and persists to `localStorage`. |
+
+What that buys you:
+
+- **Nothing to run.** The output is a folder of files on a CDN. No server to
+  keep alive, no database to back up, no cold start, and nothing to patch.
+- **Fast and cheap by default.** A static file from an edge cache is about as
+  quick as the web gets, and it costs the same whether ten people visit or ten
+  thousand.
+- **Indexable.** A crawler gets the finished page on the first request, not an
+  empty shell that fills in later. This is where most SPA storefronts lose.
+- **Nothing to attack.** No runtime, no database and no server-side session
+  means most of the usual attack surface simply is not there.
+
+The trade is that content changes need a rebuild, which is why the sitemap is
+generated per request rather than baked in, and why the CMS is worth having:
+editors change the catalogue without touching code, and a webhook can rebuild.
 
 The cart is deliberately self-contained, so the whole thing runs end to end
 without signing up for a payment provider. Attach one when you actually need to
