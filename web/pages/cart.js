@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import Link from 'next/link'
+import imageUrlBuilder from '@sanity/image-url'
+import { toast } from 'react-toastify'
 import sanityClient from '../lib/sanity'
 import CartItem from '../components/cartItem'
 import Layout from '../components/layout/layout'
@@ -12,6 +15,10 @@ import {
 
 const SNIPCART_ENABLED = Boolean(process.env.NEXT_PUBLIC_SNIPCART_API_KEY)
 
+function urlFor (source) {
+  return imageUrlBuilder(sanityClient).image(source)
+}
+
 export default function Cart ({ navCategories, subCategories }) {
   const dispatch = useDispatch()
   const cartItemsObj = useSelector(selectCart)
@@ -19,7 +26,64 @@ export default function Cart ({ navCategories, subCategories }) {
   const cartCount = useSelector(selectCartCount)
   const cartItemsList = Object.values(cartItemsObj)
 
+  const [checkingOut, setCheckingOut] = useState(false)
+
   const isEmpty = cartItemsList.length === 0
+
+  /**
+   * Hands the cart to Snipcart, then opens it.
+   *
+   * Snipcart keeps its own cart, entirely separate from this one. The usual
+   * integration lets Snipcart own everything through snipcart-add-item
+   * buttons, but then quantity changes made here would not reach it and the
+   * two would drift apart. So this cart stays the single source of truth and
+   * Snipcart is used only as the checkout: its cart is emptied and refilled
+   * from ours at the moment of checkout.
+   *
+   * Emptying first matters because a customer who opens checkout, backs out,
+   * changes quantities and returns would otherwise stack the old lines on top
+   * of the new ones.
+   */
+  const handleCheckout = async () => {
+    const snipcart = typeof window !== 'undefined' ? window.Snipcart : null
+
+    if (!snipcart?.api?.cart) {
+      toast.error('Checkout is still loading, try again in a moment')
+      return
+    }
+
+    setCheckingOut(true)
+
+    try {
+      const existing = snipcart.store?.getState?.()?.cart?.items?.items ?? []
+      for (const item of existing) {
+        await snipcart.api.cart.items.remove(item.uniqueId)
+      }
+
+      for (const product of cartItemsList) {
+        const image = product.defaultProductVariant.images?.[0]
+
+        await snipcart.api.cart.items.add({
+          // Must match the data-item-id and data-item-price on the product
+          // page: Snipcart fetches `url` and validates the price it finds
+          // there against the one sent here, so a tampered price is rejected.
+          id: product._id,
+          name: product.title,
+          price: product.defaultProductVariant.price,
+          url: `${window.location.origin}/item/${product.slug.current}`,
+          quantity: product.count,
+          ...(image ? { image: urlFor(image).width(300).url() } : {})
+        })
+      }
+
+      await snipcart.api.theme.cart.open()
+    } catch (error) {
+      console.error('Snipcart checkout failed:', error)
+      toast.error('Could not start checkout. Please try again.')
+    } finally {
+      setCheckingOut(false)
+    }
+  }
 
   return (
     <Layout
@@ -74,9 +138,11 @@ export default function Cart ({ navCategories, subCategories }) {
               {SNIPCART_ENABLED ? (
                 <button
                   type='button'
-                  className='snipcart-checkout mt-6 flex w-full items-center justify-center rounded-lg bg-gray-900 px-8 py-4 text-lg font-medium text-white shadow-lg transition hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2'
+                  onClick={handleCheckout}
+                  disabled={checkingOut}
+                  className='mt-6 flex w-full items-center justify-center rounded-lg bg-gray-900 px-8 py-4 text-lg font-medium text-white shadow-lg transition hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:bg-gray-600'
                 >
-                  Checkout
+                  {checkingOut ? 'Opening checkout…' : 'Checkout'}
                 </button>
               ) : (
                 <>

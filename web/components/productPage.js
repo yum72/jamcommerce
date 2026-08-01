@@ -8,6 +8,8 @@ import { useState, useEffect } from 'react'
 import { addToCart } from '../redux/cartSlice'
 import { toast } from 'react-toastify'
 
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '')
+
 function urlFor (source) {
   return imageUrlBuilder(sanityClient).image(source)
 }
@@ -51,7 +53,9 @@ export default function ProductPage ({ product }) {
   }
 
   const [count, setCount] = useState(1)
-  const [sitePath, setsitePath] = useState('')
+  // Falls back to reading the origin on the client for local development,
+  // where NEXT_PUBLIC_SITE_URL is usually unset.
+  const [sitePath, setsitePath] = useState(SITE_URL)
 
   const sliderImages = defaultProductVariant.images.map(image => {
     let original = urlFor(image)
@@ -73,9 +77,8 @@ export default function ProductPage ({ product }) {
   let { price } = defaultProductVariant
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      let path = location.protocol + '//' + location.host
-      setsitePath(path)
+    if (!SITE_URL && typeof window !== 'undefined') {
+      setsitePath(location.protocol + '//' + location.host)
     }
   }, [])
 
