@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import Head from 'next/head'
 import Script from 'next/script'
+import { useRouter } from 'next/router'
 import { Provider } from 'react-redux'
 import { ToastContainer } from 'react-toastify'
 
@@ -11,6 +13,23 @@ import 'react-toastify/dist/ReactToastify.css'
 const SNIPCART_API_KEY = process.env.NEXT_PUBLIC_SNIPCART_API_KEY
 
 export default function MyApp ({ Component, pageProps }) {
+  const router = useRouter()
+
+  // Snipcart's cart is a fixed overlay that does not know about client-side
+  // navigation, so clicking a nav link behind it changed the page while the
+  // overlay stayed put over the top of it. Close it whenever a route change
+  // starts, so navigating away actually looks like navigating away.
+  useEffect(() => {
+    if (!SNIPCART_API_KEY) return
+
+    const closeCart = () => {
+      window.Snipcart?.api?.theme?.cart?.close?.()
+    }
+
+    router.events.on('routeChangeStart', closeCart)
+    return () => router.events.off('routeChangeStart', closeCart)
+  }, [router])
+
   return (
     <Provider store={store}>
       {/* Snipcart only loads when a key is configured. It was loading

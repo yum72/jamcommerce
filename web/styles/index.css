@@ -29,3 +29,15 @@
 .snipcart-cart-button--highlight:hover {
   @apply bg-gray-900;
 }
+
+/* Snipcart's modal is fixed at z-index 20, which sits below the sticky site
+   header. That put the header on top of the modal's close button, so once the
+   cart opened there was no way to dismiss it: the close control was there but
+   unclickable, and the page underneath could not be reached either.
+
+   A checkout overlay should be above site chrome unconditionally, so raise it
+   rather than lowering the header and hoping nothing else ever competes. */
+.snipcart-modal__container,
+.snipcart-modal {
+  z-index: 9999 !important;
+}
