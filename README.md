@@ -47,10 +47,16 @@ take money.
 ## What it does
 
 - Home page with a CMS-editable hero and a row of products per category
-- Category pages, generated from whatever categories exist in Sanity
-- Product pages with an image gallery and Portable Text descriptions
-- A cart with quantity controls that survives a refresh
-- Navigation built from the categories you flag as "show on nav"
+- Category pages, generated from whatever categories exist in Sanity, sortable
+  by price, name or date
+- Product pages with an image gallery, Portable Text descriptions and a row of
+  related products
+- A cart with quantity controls that survives a refresh, and a saved-items list
+  alongside it
+- Instant search over the whole catalogue with no API call — the index is built
+  at deploy time and filtered in the browser
+- Navigation and a promo bar built from the CMS: the categories you flag as
+  "show on nav" and whichever hero campaign is active
 - Per-page titles, meta descriptions, Open Graph tags and Product structured data
 - A sitemap that stays current as the catalogue changes
 
@@ -172,6 +178,12 @@ the cart rehydrates a moment after mount and the badge updates then.
 The barcode field was a Sanity v1 plugin whose custom input drew a live barcode.
 The part system it relied on no longer exists, so it is a plain object type with
 the same shape. Existing documents read back fine.
+
+The interface was then redesigned around a forest green and cream palette, with
+Plus Jakarta Sans for headings and prices and Inter for body copy, both
+self-hosted through `next/font`. Design tokens live in `web/styles/index.css`
+under Tailwind 4's `@theme`, so the palette and the two font stacks are changed
+in one place.
 
 ## License
 
