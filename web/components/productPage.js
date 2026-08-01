@@ -1,12 +1,24 @@
-import { useDispatch } from 'react-redux'
-import imageUrlBuilder from '@sanity/image-url'
-import sanityClient from '../lib/sanity'
-import { PortableText } from '@portabletext/react'
-import ImageGallery from 'react-image-gallery'
-import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { addToCart } from '../redux/cartSlice'
+import { useRouter } from 'next/router'
+import Link from 'next/link'
+import { useDispatch, useSelector } from 'react-redux'
+import { PortableText } from '@portabletext/react'
+import imageUrlBuilder from '@sanity/image-url'
 import { toast } from 'react-toastify'
+
+import sanityClient from '../lib/sanity'
+import { addToCart } from '../redux/cartSlice'
+import { toggleWishlist, selectIsWishlisted } from '../redux/wishlistSlice'
+import ProductGallery from './productGallery'
+import Breadcrumbs from './breadcrumbs'
+import Price from './ui/price'
+import {
+  MinusIcon,
+  PlusIcon,
+  HeartIcon,
+  TruckIcon,
+  ReturnIcon
+} from './ui/icons'
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '')
 
@@ -29,151 +41,221 @@ const portableTextComponents = {
 
 export default function ProductPage ({ product }) {
   const dispatch = useDispatch()
+  const router = useRouter()
   const {
     _id,
     _createdAt,
     blurb,
-    body = [],
+    body = {},
     defaultProductVariant,
-    tags,
     title,
-    vendor,
-    categories,
+    categories = [],
     slug
   } = product
 
-  // Only the fields the cart actually renders. Storing the whole product
+  const { price, images = [] } = defaultProductVariant
+  const saved = useSelector(selectIsWishlisted(_id))
+
+  // Only the fields the cart and the card render. Storing the whole product
   // document would put a page's worth of Portable Text into localStorage.
   const cartItem = {
     _id,
     slug,
     _createdAt,
     title,
+    category: categories[0]?.title,
     defaultProductVariant
   }
 
   const [count, setCount] = useState(1)
   // Falls back to reading the origin on the client for local development,
   // where NEXT_PUBLIC_SITE_URL is usually unset.
-  const [sitePath, setsitePath] = useState(SITE_URL)
-
-  const sliderImages = defaultProductVariant.images.map(image => {
-    let original = urlFor(image)
-      .width(1200)
-      .url()
-    let thumbnail = urlFor(image)
-      .width(300)
-      .url()
-    return {
-      original,
-      thumbnail,
-      // react-image-gallery renders its own img tags, so alt text has to be
-      // handed to it here rather than set in the markup.
-      originalAlt: title,
-      thumbnailAlt: title
-    }
-  })
-
-  let { price } = defaultProductVariant
+  const [sitePath, setSitePath] = useState(SITE_URL)
 
   useEffect(() => {
     if (!SITE_URL && typeof window !== 'undefined') {
-      setsitePath(location.protocol + '//' + location.host)
+      setSitePath(window.location.origin)
     }
   }, [])
 
-  const handleDecrease = () => {
-    if (count > 1) setCount(count - 1)
-  }
-
-  const handleIncrease = () => setCount(count + 1)
-
   const handleAddToCart = () => {
     dispatch(addToCart({ ...cartItem, count }))
-    toast.success('Added to cart')
+    toast.success(`${title} added to cart`)
+  }
+
+  // Same action, then straight to the cart. A "Buy now" that only fills the
+  // cart and leaves you on the product page is the same button twice.
+  const handleBuyNow = () => {
+    dispatch(addToCart({ ...cartItem, count }))
+    router.push('/cart')
   }
 
   return (
-    <div>
-      <div className='flex flex-col sm:flex-row'>
-        <div className='py-5 flex-1 w-auto sm:px-4'>
-          {defaultProductVariant.images && (
-            <ImageGallery
-              items={sliderImages}
-              showPlayButton={false}
-              // additionalClassNameclassName={'h-24'}
-            />
+    <div className='pb-4'>
+      <Breadcrumbs
+        items={[
+          { label: 'Home', href: '/' },
+          ...(categories[0]
+            ? [
+                {
+                  label: categories[0].title,
+                  href: `/categories/${categories[0].slug.current}`
+                }
+              ]
+            : []),
+          { label: title }
+        ]}
+      />
+
+      <div className='mt-6 grid gap-10 lg:grid-cols-2 lg:gap-14'>
+        <ProductGallery images={images} title={title} />
+
+        <div className='lg:py-2'>
+          <h1 className='font-display text-3xl leading-tight font-extrabold tracking-tight sm:text-4xl'>
+            {title}
+          </h1>
+
+          {blurb?.en && (
+            <p className='mt-3 max-w-prose leading-relaxed text-ink-muted'>
+              {blurb.en}
+            </p>
           )}
-        </div>
-        <div className='py-2 flex-1 '>
-          <h1 className='text-4xl text-gray-800'>{title}</h1>
-          <div className='text-3xl font-semibold text-gray-700'>${price}</div>
-          <div className='pt-4 text-2xl text-gray-700'>{blurb.en}</div>
-          <div className='pt-2 pt-4text-base text-gray-600'>
-            <PortableText
-              value={body.en ?? []}
-              components={portableTextComponents}
-            />
-          </div>
-          {/* <div>Vendor: {vendor.title}</div>
-          <div>Tag: {tags}</div> */}
-          <div className='text-lg pt-4 text-gray-700 font-semibold'>
-            {categories.length > 1 ? 'Categories: ' : 'Category: '}
-            {categories.map((category, i) => (
-              <span key={category.title}>
-                <Link
-                  href={`/categories/${category.slug.current}`}
-                  className='text-red-500 underline-offset-2 hover:underline'
-                >
-                  {category.title}
-                </Link>
-                {categories.length > i + 1 ? ', ' : ''}
-              </span>
-            ))}
-          </div>
-          <div className='flex mt-10'>
-            <div className='my-auto py-1 px-2 mr-2 w-32 border border-gray-700 rounded flex'>
+
+          <hr className='my-5 border-line' />
+
+          <Price value={price} className='text-4xl' />
+
+          {categories.length > 0 && (
+            <div className='mt-5'>
+              <h2 className='font-display text-sm font-bold'>
+                {categories.length > 1 ? 'Categories' : 'Category'}
+              </h2>
+              <div className='mt-3 flex flex-wrap gap-2'>
+                {categories.map(category => (
+                  <Link
+                    key={category.title}
+                    href={`/categories/${category.slug.current}`}
+                    className='rounded-full border border-line px-4 py-1.5 text-sm font-medium transition hover:border-forest-900 hover:text-forest-900'
+                  >
+                    {category.title}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <hr className='my-5 border-line' />
+
+          <div className='flex flex-wrap items-center gap-4'>
+            <div className='inline-flex items-center rounded-full bg-tile'>
               <button
+                type='button'
                 aria-label='Decrease quantity'
-                className='my-auto mx-2 w-4 text-xl leading-6 font-bold text-gray-800 focus:outline-none transition duration-150 ease-in-out'
-                onClick={handleDecrease}
+                onClick={() => setCount(c => Math.max(1, c - 1))}
+                disabled={count === 1}
+                className='grid h-11 w-11 place-items-center rounded-full transition hover:bg-line disabled:opacity-40 disabled:hover:bg-transparent'
               >
-                -
+                <MinusIcon className='h-4 w-4' />
               </button>
-              <input
-                aria-label='Quantity'
-                value={count}
-                readOnly
-                className='w-10 text-center h-10 bg-gray-100 my-auto tracking-wider focus:outline-none'
-              />
-              <button
-                aria-label='Increase quantity'
-                className='my-auto mx-2 w-4 text-lg leading-6 font-bold text-gray-800 focus:outline-none transition duration-150 ease-in-out'
-                onClick={handleIncrease}
+              <span
+                aria-live='polite'
+                aria-label={`Quantity: ${count}`}
+                className='w-10 text-center font-display font-bold tabular-nums'
               >
-                +
+                {count}
+              </span>
+              <button
+                type='button'
+                aria-label='Increase quantity'
+                onClick={() => setCount(c => c + 1)}
+                className='grid h-11 w-11 place-items-center rounded-full transition hover:bg-line'
+              >
+                <PlusIcon className='h-4 w-4' />
               </button>
             </div>
-            {/* The data-item-* attributes are Snipcart's. They are harmless
-                without a key configured, and let the same button drive a
-                Snipcart checkout for anyone who sets one up. The click handler
-                is what fills the built-in cart, so the store works with no
-                third-party account. */}
+
             <button
+              type='button'
+              onClick={() => {
+                dispatch(toggleWishlist(cartItem))
+                toast.info(saved ? 'Removed from saved' : 'Saved for later')
+              }}
+              aria-pressed={saved}
+              className='inline-flex h-11 items-center gap-2 rounded-full border border-line px-5 text-sm font-semibold transition hover:border-forest-900 hover:text-forest-900'
+            >
+              <HeartIcon
+                filled={saved}
+                className={`h-4.5 w-4.5 ${saved ? 'text-forest-900' : ''}`}
+              />
+              {saved ? 'Saved' : 'Save'}
+            </button>
+          </div>
+
+          <div className='mt-5 flex flex-col gap-3 sm:flex-row'>
+            {/* The data-item-* attributes are Snipcart's. They are harmless
+                without a key configured, and they are what Snipcart validates
+                the cart against at checkout: it fetches this URL and compares
+                the price it finds here with the one submitted, so a tampered
+                price is rejected. */}
+            <button
+              type='button'
               data-item-id={_id}
               data-item-price={price}
-              data-item-url={sitePath + '/item/' + slug.current}
-              data-item-description={blurb.en}
-              data-item-image={sliderImages[0].thumbnail}
+              data-item-url={`${sitePath}/item/${slug.current}`}
+              data-item-description={blurb?.en}
+              data-item-image={images[0] ? urlFor(images[0]).width(300).url() : undefined}
               data-item-name={title}
-              className='w-full flex items-center justify-center sm:px-8 py-4 border border-transparent text-sm sm:text-base leading-6 font-medium rounded text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 transition duration-150 ease-in-out md:text-lg md:px-10 shadow-lg'
+              onClick={handleBuyNow}
+              className='btn btn-primary flex-1 px-8 py-4'
+            >
+              Buy now
+            </button>
+
+            <button
+              type='button'
               onClick={handleAddToCart}
+              className='btn btn-outline flex-1 px-8 py-4'
             >
               Add to cart
             </button>
           </div>
+
+          <dl className='mt-6 divide-y divide-line rounded-2xl border border-line'>
+            <div className='flex gap-3 p-4'>
+              <TruckIcon className='mt-0.5 h-5 w-5 shrink-0 text-forest-900' />
+              <div>
+                <dt className='font-display text-sm font-bold'>Free delivery</dt>
+                <dd className='text-sm text-ink-muted'>
+                  On every order over $500, arriving in 2–4 working days.
+                </dd>
+              </div>
+            </div>
+            <div className='flex gap-3 p-4'>
+              <ReturnIcon className='mt-0.5 h-5 w-5 shrink-0 text-forest-900' />
+              <div>
+                <dt className='font-display text-sm font-bold'>Free returns</dt>
+                <dd className='text-sm text-ink-muted'>
+                  Send anything back within 30 days at no cost.
+                </dd>
+              </div>
+            </div>
+          </dl>
         </div>
       </div>
+
+      {body?.en?.length > 0 && (
+        <section className='mt-16 max-w-3xl'>
+          <h2 className='font-display text-2xl font-extrabold tracking-tight'>
+            Details
+          </h2>
+          <div className='mt-4 space-y-4 leading-relaxed text-ink-muted'>
+            <PortableText
+              value={body.en}
+              components={portableTextComponents}
+            />
+          </div>
+        </section>
+      )}
     </div>
   )
 }

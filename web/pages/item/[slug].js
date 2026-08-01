@@ -1,13 +1,15 @@
 import Head from 'next/head'
 import imageUrlBuilder from '@sanity/image-url'
 import sanityClient from '../../lib/sanity'
+import { getLayoutProps } from '../../lib/layoutData'
 import ProductPage from '../../components/productPage'
+import ProductsContainer from '../../components/productsContainer'
 import Layout from '../../components/layout/layout'
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '')
 
-export default function Post ({ productData, navCategories, subCategories }) {
-  const { title, blurb, slug, defaultProductVariant } = productData
+export default function Post ({ productData, similarProducts = [], ...layout }) {
+  const { title, blurb, slug, defaultProductVariant, categories } = productData
 
   const description = blurb?.en
     ? blurb.en.slice(0, 155)
@@ -30,6 +32,7 @@ export default function Post ({ productData, navCategories, subCategories }) {
     description,
     ...(image ? { image: [image] } : {}),
     ...(defaultProductVariant.sku ? { sku: defaultProductVariant.sku } : {}),
+    ...(categories?.[0] ? { category: categories[0].title } : {}),
     offers: {
       '@type': 'Offer',
       price: defaultProductVariant.price,
@@ -45,8 +48,7 @@ export default function Post ({ productData, navCategories, subCategories }) {
       description={description}
       image={image}
       path={`/item/${slug.current}`}
-      navCategories={navCategories}
-      subCategories={subCategories}
+      {...layout}
     >
       <Head>
         <script
@@ -54,40 +56,63 @@ export default function Post ({ productData, navCategories, subCategories }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </Head>
+
       <ProductPage product={productData} />
+
+      {similarProducts.length > 0 && (
+        <ProductsContainer
+          title='More like this'
+          products={similarProducts}
+          viewAllHref={
+            categories?.[0]
+              ? `/categories/${categories[0].slug.current}`
+              : undefined
+          }
+        />
+      )}
     </Layout>
   )
 }
 
 export async function getStaticPaths () {
-  let query = `*[_type == 'product']{ slug }`
-  const slugs = await sanityClient.fetch(query)
-  const paths = slugs.map(item => ({
-    params: {
-      slug: item.slug.current
-    }
-  }))
+  const slugs = await sanityClient.fetch(`*[_type == 'product']{ slug }`)
   return {
-    paths,
+    paths: slugs.map(item => ({ params: { slug: item.slug.current } })),
     fallback: false
   }
 }
 
 export async function getStaticProps ({ params }) {
-  let query = `*[_type == 'product' && slug.current == '${params.slug}'] {_id, slug, _createdAt, blurb, body, defaultProductVariant, tags, title, vendor->{title}, categories[]->{title, slug}}[0]`
-  const productData = await sanityClient.fetch(query)
+  // Parameterised rather than interpolated into the query string. A slug with a
+  // quote in it used to produce a syntax error at build time.
+  const productData = await sanityClient.fetch(
+    `*[_type == 'product' && slug.current == $slug][0]{
+      _id, slug, _createdAt, blurb, body, defaultProductVariant, tags, title,
+      vendor->{title},
+      categories[]->{title, slug},
+      "categoryIds": categories[]._ref
+    }`,
+    { slug: params.slug }
+  )
 
-  let catQuery = `*[_type == "category" && isOnNav == true]{slug, title}`
-  const navCategories = await sanityClient.fetch(catQuery)
-
-  let subCategoriesQuery = `*[_type == "category" && defined(parents)]{title, slug}`
-  const subCategories = await sanityClient.fetch(subCategoriesQuery)
+  const [similarProducts, layout] = await Promise.all([
+    // Other products sharing at least one category, so the row is genuinely
+    // related rather than whatever happened to be indexed next.
+    sanityClient.fetch(
+      `*[_type == 'product' && _id != $id && count((categories[]._ref)[@ in $categoryIds]) > 0]{
+        _id, slug, _createdAt, title, defaultProductVariant,
+        "category": categories[0]->title
+      }[0...4]`,
+      { id: productData._id, categoryIds: productData.categoryIds ?? [] }
+    ),
+    getLayoutProps()
+  ])
 
   return {
     props: {
       productData,
-      navCategories,
-      subCategories
+      similarProducts,
+      ...layout
     }
   }
 }
