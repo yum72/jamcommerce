@@ -21,6 +21,10 @@ export default function SingleProduct ({ product }) {
                 src={urlFor(defaultProductVariant.images[0])
                   .width(300)
                   .url()}
+                alt={title}
+                loading='lazy'
+                width='300'
+                height='300'
               />
             </Link>
           </div>
