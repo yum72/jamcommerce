@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import Head from 'next/head'
 import Script from 'next/script'
 import { useRouter } from 'next/router'
-import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
+import localFont from 'next/font/local'
 import { Provider } from 'react-redux'
 import { ToastContainer } from 'react-toastify'
 
@@ -17,16 +17,18 @@ const SNIPCART_API_KEY = process.env.NEXT_PUBLIC_SNIPCART_API_KEY
 // @import made every page wait on a round trip to fonts.googleapis.com before
 // it could paint, and it pulled all fourteen Nunito weights for a font the old
 // Tailwind config never actually applied. These ship from the site's own
-// origin, preloaded, subset to latin, with only the weights in use.
-const inter = Inter({
-  subsets: ['latin'],
+// origin, preloaded, subset to latin, with only the weights in use. The files
+// live in the repo so the build never depends on reaching Google Fonts.
+const inter = localFont({
+  src: '../fonts/inter-latin.woff2',
+  weight: '100 900',
   variable: '--font-inter',
   display: 'swap'
 })
 
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  weight: ['500', '700', '800'],
+const jakarta = localFont({
+  src: '../fonts/plus-jakarta-sans-latin.woff2',
+  weight: '500 800',
   variable: '--font-jakarta',
   display: 'swap'
 })
